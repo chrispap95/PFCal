@@ -52,6 +52,10 @@ public:
 		    const ROOT::Math::XYZPoint & vtx1,
 		    const ROOT::Math::XYZPoint & vtx2);
 		    
+  inline void setEvtIdx(const unsigned & idx){
+    evtIdx_ = idx;
+  };
+
   void initialiseHistograms(TFile *fout, 
 			    const std::string folder);
 
@@ -61,6 +65,32 @@ public:
 private:
 
   TRandom3 rand_;
+
+  //output tree
+  TTree *tree_;
+
+  unsigned evtIdx_;
+
+  double MH_;
+  double pTH_;
+  double etaH_;
+  double truthMH_;
+  double truthpTH_;
+  double truthetaH_;
+
+  double E1_;
+  double eta1_;
+  double phi1_;
+  double truthE1_;
+  double trutheta1_;
+  double truthphi1_;
+
+  double E2_;
+  double eta2_;
+  double phi2_;
+  double truthE2_;
+  double trutheta2_;
+  double truthphi2_;
 
   //reco
   TLorentzVector g1_;

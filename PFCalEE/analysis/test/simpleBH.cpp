@@ -197,36 +197,56 @@ int main(int argc, char** argv){//main
   }
   outputFile->cd();
 
+  /*
   TTree *miptree=new TTree("MipTree","HGC MipAnalysis tree");
   HGCSSSimpleHitVec miphitvec;
   const unsigned nHitsInit = 20000;
   miphitvec.resize(nHitsInit);//,dummy);
+  */
+
 
   std::ostringstream label;
   //root doesn't like . in branch names.....
-  label << "hits";
-  miptree->Branch(label.str().c_str(),"std::vector<HGCSSSimpleHit>",&miphitvec);
+  //label << "hits";
+  //miptree->Branch(label.str().c_str(),"std::vector<HGCSSSimpleHit>",&miphitvec);
 
   TH1F* h_energy = new TH1F("h_energy","hit energy",1000,0.,5.);
   TH1F* h_z = new TH1F("h_z","z of hit",1000,3000.,5200);
   TH2F* h_xy = new TH2F("h_xy","xy of hit",1000,-1200,1200,1000,-1200,1200);
 
-  TH2F* h_xy36 = new TH2F("h_xy36","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy37 = new TH2F("h_xy37","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy38 = new TH2F("h_xy38","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy39 = new TH2F("h_xy39","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy40 = new TH2F("h_xy40","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy41 = new TH2F("h_xy41","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy42 = new TH2F("h_xy42","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy43 = new TH2F("h_xy43","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy44 = new TH2F("h_xy44","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy45 = new TH2F("h_xy45","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy46 = new TH2F("h_xy46","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy47 = new TH2F("h_xy47","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy48 = new TH2F("h_xy48","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy49 = new TH2F("h_xy49","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy50 = new TH2F("h_xy50","xy of hit",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_xy51 = new TH2F("h_xy51","xy of hit",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy36 = new TH2F("h_nsxy36","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy37 = new TH2F("h_nsxy37","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy38 = new TH2F("h_nsxy38","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy39 = new TH2F("h_nsxy39","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy40 = new TH2F("h_nsxy40","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy41 = new TH2F("h_nsxy41","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy42 = new TH2F("h_nsxy42","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy43 = new TH2F("h_nsxy43","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy44 = new TH2F("h_nsxy44","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy45 = new TH2F("h_nsxy45","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy46 = new TH2F("h_nsxy46","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy47 = new TH2F("h_nsxy47","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy48 = new TH2F("h_nsxy48","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy49 = new TH2F("h_nsxy49","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy50 = new TH2F("h_nsxy50","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_nsxy51 = new TH2F("h_nsxy51","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
+
+  TH2F* h_sxy36 = new TH2F("h_sxy36","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy37 = new TH2F("h_sxy37","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy38 = new TH2F("h_sxy38","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy39 = new TH2F("h_sxy39","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy40 = new TH2F("h_sxy40","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy41 = new TH2F("h_sxy41","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy42 = new TH2F("h_sxy42","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy43 = new TH2F("h_sxy43","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy44 = new TH2F("h_sxy44","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy45 = new TH2F("h_sxy45","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy46 = new TH2F("h_sxy46","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy47 = new TH2F("h_sxy47","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy48 = new TH2F("h_sxy48","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy49 = new TH2F("h_sxy49","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy50 = new TH2F("h_sxy50","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
   
   ///////////////////////////////////////////////////////
@@ -253,7 +273,7 @@ int main(int argc, char** argv){//main
     else if (ievt%50 == 0) std::cout << "... Processing entry: " << ievt << std::endl;
     lTree->GetEntry(ievt);
 
-    miphitvec.clear();
+    //miphitvec.clear();
 
 
     bool isScint = false;
@@ -291,40 +311,98 @@ int main(int argc, char** argv){//main
 	myHit.sety(lHit.get_y());
 	myHit.setz(lHit.get_z());
 	myHit.setLayer(lHit.layer());
-        miphitvec.push_back(myHit);
+        //miphitvec.push_back(myHit);
+
+	if(debug>4) {
+	  if(isScint) std::cout<<"Will Robinson: found one "<<lHit.energy()<<" "<<lHit.layer()<<std::endl;
+	}
 
 	h_energy->Fill(lHit.energy());
 	h_z->Fill(lHit.get_z());
 	h_xy->Fill(lHit.get_x(),lHit.get_y());
 	int ilayer = lHit.layer();
-	if(ilayer==36) h_xy36->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==37) h_xy37->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==38) h_xy38->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==39) h_xy39->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==40) h_xy40->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==41) h_xy41->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==42) h_xy42->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==43) h_xy43->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==44) h_xy44->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==45) h_xy45->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==46) h_xy46->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==47) h_xy47->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==48) h_xy48->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==49) h_xy49->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==50) h_xy50->Fill(lHit.get_x(),lHit.get_y());
-	if(ilayer==51) h_xy51->Fill(lHit.get_x(),lHit.get_y());
+
+
+
+	if(ilayer==36) {
+	  if(isScint) h_sxy36->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy36->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==37) {
+	  if(isScint) h_sxy37->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy37->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==38) {
+	  if(isScint) h_sxy38->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy38->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==39) {
+	  if(isScint) h_sxy39->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy39->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==40) {
+	  if(isScint) h_sxy40->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy40->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==41) {
+	  if(isScint) h_sxy41->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy41->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==42) {
+	  if(isScint) h_sxy42->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy42->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==43) {
+	  if(isScint) h_sxy43->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy43->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==44) {
+	  if(isScint) h_sxy44->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy44->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==45) {
+	  if(isScint) h_sxy45->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy45->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==46) {
+	  if(isScint) h_sxy46->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy46->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==47) {
+	  if(isScint) h_sxy47->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy47->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==48) {
+	  if(isScint) h_sxy48->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy48->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==49) {
+	  if(isScint) h_sxy49->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy49->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==50) {
+	  if(isScint) h_sxy50->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy50->Fill(lHit.get_x(),lHit.get_y());
+	};
+	if(ilayer==51) {
+	  if(isScint) h_sxy51->Fill(lHit.get_x(),lHit.get_y());
+	  else h_nsxy51->Fill(lHit.get_x(),lHit.get_y());
+	};
+
+
 
       }//loop on hits
 
       if (debug) std::cout << " - In eta range, event contains " << (*rechitvec).size() << " rechits." << std::endl;
 
     
-    miptree->Fill();
+      //miptree->Fill();
 
     geomConv.initialiseHistos();
 
   }//loop on entries
 
+  if(debug) std::cout<<"writing files"<<std::endl;
 
   outputFile->cd();
   outputFile->Write();

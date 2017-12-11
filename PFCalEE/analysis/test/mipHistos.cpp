@@ -67,22 +67,22 @@ int main(int argc, char** argv){//main
 	    << " -- Input file path: " << inFilePath << std::endl
 	    << " -- Output file path: " << outFilePath << std::endl
 	    << " -- Do 5 layers: " << do5lay  << std::endl
-	    << " -- Do tight selection (1: exactly one hit, 2: only central hit in each layer): " << doTightSel 
+	    << " -- Do tight selection (1: exactly one hit): " << doTightSel 
 	    << std::endl
 	    << " -- Processing ";
   if (pNevts == 0) std::cout << "all events in " << nRuns << "runs." << std::endl;
   else std::cout << pNevts << " events per run." << std::endl;
 
-  const unsigned nNoise = 10;//5;//10;
-  //const double noise[nNoise] = {0,0.13,0.2,0.27,0.35,0.4,0.5,0.6};
-  const double noise[nNoise] = {0,0.07,0.13,0.2,0.27,0.35,0.4,0.5,0.6,0.65};
+  const unsigned nNoise = 8;//5;//10;
+  const double noise[nNoise] = {0,0.13,0.2,0.27,0.35,0.4,0.45,0.5};
+  //const double noise[nNoise] = {0,0.07,0.13,0.2,0.27,0.35,0.4,0.5,0.6,0.65};
 
   double threshBeforeAfterMin[nNoise];
   const double threshBeforeAfterMax = 5;
   std::cout << " ---- Selection settings: ---- " << std::endl
 	    << " -------threshBeforeAfterMin ";
   for (unsigned iN(0); iN<nNoise;++iN){
-    threshBeforeAfterMin[iN] = std::max(0.9,2.5*noise[iN]);
+    threshBeforeAfterMin[iN] = std::max(0.9,2*noise[iN]);
     std::cout << threshBeforeAfterMin[iN] << " ";
   }
   std::cout << std::endl
@@ -168,13 +168,13 @@ int main(int argc, char** argv){//main
       for (unsigned jL(0);jL<4;++jL){
 	label.str("");
 	label << "neighIdx_" << iN << "_" << iL << "_neighLay" << jL;
-	hNeighIdx[iN][iL][jL] = new TH1F(label.str().c_str(),";Neighbour Idx; Mip tracks",7,0,7);
+	hNeighIdx[iN][iL][jL] = new TH1F(label.str().c_str(),";Neighbour Idx; Mip tracks",9,0,9);
 	label.str("");
 	label << "neighE_" << iN << "_" << iL << "_neighLay" << jL;
 	hNeighE[iN][iL][jL] = new TH1F(label.str().c_str(),";Neighbour E (mips); Mip tracks",100,0,5);
 	label.str("");
 	label << "neighIdxsig_" << iN << "_" << iL << "_neighLay" << jL;
-	hNeighIdxsig[iN][iL][jL] = new TH1F(label.str().c_str(),";Neighbour Idx; Mip tracks",7,0,7);
+	hNeighIdxsig[iN][iL][jL] = new TH1F(label.str().c_str(),";Neighbour Idx; Mip tracks",9,0,9);
 	label.str("");
 	label << "neighEsig_" << iN << "_" << iL << "_neighLay" << jL;
 	hNeighEsig[iN][iL][jL] = new TH1F(label.str().c_str(),";Neighbour E (mips); Mip tracks",100,0,5);
@@ -215,7 +215,8 @@ int main(int argc, char** argv){//main
 	unsigned nNeigh[4] = {0,0,0,0};
 	unsigned neiId[4] = {0,0,0,0};
 	double neiE[4] = {0,0,0,0};
-	for (unsigned ineigh(0); ineigh<7; ++ineigh){
+	unsigned nNei = layer<53?7:9;
+	for (unsigned ineigh(0); ineigh<nNei; ++ineigh){
 	  if (lHit.neigh_e_prev2layer(ineigh)>threshBeforeAfterMin[iN] && lHit.neigh_e_prev2layer(ineigh)<threshBeforeAfterMax) {
 	    nNeigh[0]++;
 	    neiId[0] = ineigh;
@@ -243,21 +244,36 @@ int main(int argc, char** argv){//main
 
 	    if (doTightSel==1) {
 	      bool fail0 = nNeigh[0]!=1 || nNeigh[1]!=1 ||nNeigh[2]!=1 ||nNeigh[3]!=1;
-	      bool pass0 = neiId[0]==0 && neiId[1]==0 && neiId[2]==0 && neiId[3]==0 ;//((neiId[2]==0 && (neiId[3]==0||neiId[3]>=4))  || (neiId[2]>=4 && neiId[3]==neiId[2]));
-	      bool pass1 = neiId[0]==1 && (neiId[1]==1 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==6)) || (neiId[2]==6 && neiId[3]==6)) ;
-	      bool pass2 = neiId[0]==2 && (neiId[1]==2 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==5)) || (neiId[2]==5 && neiId[3]==5)) ;
-	      bool pass3 = neiId[0]==3 && (neiId[1]==3 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==4)) || (neiId[2]==4 && neiId[3]==4)) ;
-	      bool pass4 = neiId[0]==4 && (neiId[1]==4 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==3)) || (neiId[2]==3 && neiId[3]==3)) ;
-	      bool pass5 = neiId[0]==5 && (neiId[1]==5 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==2)) || (neiId[2]==2 && neiId[3]==2)) ;
-	      bool pass6 = neiId[0]==6 && (neiId[1]==6 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==1)) || (neiId[2]==1 && neiId[3]==1)) ;
-	      fail = fail0 || !(pass0||pass1||pass2||pass3||pass4||pass5||pass6);
+	      if (layer<53){
+		bool pass0 = neiId[0]==0 && neiId[1]==0 && neiId[2]==0 && neiId[3]==0 ;//((neiId[2]==0 && (neiId[3]==0||neiId[3]>=4))  || (neiId[2]>=4 && neiId[3]==neiId[2]));
+		bool pass1 = neiId[0]==1 && (neiId[1]==1 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==6)) || (neiId[2]==6 && neiId[3]==6)) ;
+		bool pass2 = neiId[0]==2 && (neiId[1]==2 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==5)) || (neiId[2]==5 && neiId[3]==5)) ;
+		bool pass3 = neiId[0]==3 && (neiId[1]==3 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==4)) || (neiId[2]==4 && neiId[3]==4)) ;
+		bool pass4 = neiId[0]==4 && (neiId[1]==4 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==3)) || (neiId[2]==3 && neiId[3]==3)) ;
+		bool pass5 = neiId[0]==5 && (neiId[1]==5 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==2)) || (neiId[2]==2 && neiId[3]==2)) ;
+		bool pass6 = neiId[0]==6 && (neiId[1]==6 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==1)) || (neiId[2]==1 && neiId[3]==1)) ;
+		fail = fail0 || !(pass0||pass1||pass2||pass3||pass4||pass5||pass6);
 	      //fail = nNeigh[0]!=1 || nNeigh[1]!=1 ||nNeigh[2]!=1 ||nNeigh[3]!=1;
+	      }
+	      else {
+		bool pass0 = neiId[0]==0 && neiId[1]==0 && neiId[2]==0 && neiId[3]==0 ;//((neiId[2]==0 && (neiId[3]==0||neiId[3]>=4))  || (neiId[2]>=4 && neiId[3]==neiId[2]));
+		bool pass1 = neiId[0]==1 && (neiId[1]==1 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==8)) || (neiId[2]==8 && neiId[3]==8)) ;
+		bool pass2 = neiId[0]==2 && (neiId[1]==2 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==7)) || (neiId[2]==7 && neiId[3]==7)) ;
+		bool pass3 = neiId[0]==3 && (neiId[1]==3 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==6)) || (neiId[2]==6 && neiId[3]==6)) ;
+		bool pass4 = neiId[0]==4 && (neiId[1]==4 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==5)) || (neiId[2]==5 && neiId[3]==5)) ;
+		bool pass5 = neiId[0]==5 && (neiId[1]==5 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==4)) || (neiId[2]==4 && neiId[3]==4)) ;
+		bool pass6 = neiId[0]==6 && (neiId[1]==6 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==3)) || (neiId[2]==3 && neiId[3]==3)) ;
+		bool pass7 = neiId[0]==7 && (neiId[1]==7 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==2)) || (neiId[2]==2 && neiId[3]==2)) ;
+		bool pass8 = neiId[0]==8 && (neiId[1]==8 || neiId[1]==0) && ((neiId[2]==0 && (neiId[3]==0||neiId[3]==1)) || (neiId[2]==1 && neiId[3]==1)) ;
+		fail = fail0 || !(pass0||pass1||pass2||pass3||pass4||pass5||pass6||pass7||pass8);
+
+	      }
 	      
 	    }
 	    else {
 	      bool failneigh = false;
 	      //fail if one of the neighbour in all 4 layers around is within range
-	      for (unsigned ineigh(0); ineigh<6; ++ineigh){
+	      for (unsigned ineigh(0); ineigh<nNei-1; ++ineigh){
 		bool tmp = 
 		  (lHit.neigh_e_prev2layer(ineigh+1)>threshBeforeAfterMin[iN] && lHit.neigh_e_prev2layer(ineigh+1)<threshBeforeAfterMax) || 
 		  (lHit.neigh_e_prevlayer(ineigh+1)>threshBeforeAfterMin[iN] && lHit.neigh_e_prevlayer(ineigh+1)<threshBeforeAfterMax) || 
@@ -277,19 +293,33 @@ int main(int argc, char** argv){//main
 	  if (doTightSel){
 	    if (doTightSel==1) {
 	      bool fail0 = nNeigh[1]!=1 || nNeigh[2]!=1;
-	      bool pass0 = neiId[1]==0 && neiId[2]==0;
-	      bool pass1 = neiId[1]==1 && (neiId[2]==0 || neiId[2]==6);
-	      bool pass2 = neiId[1]==2 && (neiId[2]==0 || neiId[2]==5);
-	      bool pass3 = neiId[1]==3 && (neiId[2]==0 || neiId[2]==4);
-	      bool pass4 = neiId[1]==4 && (neiId[2]==0 || neiId[2]==3);
-	      bool pass5 = neiId[1]==5 && (neiId[2]==0 || neiId[2]==2);
-	      bool pass6 = neiId[1]==6 && (neiId[2]==0 || neiId[2]==1);
-	      fail = fail0 || !(pass0||pass1||pass2||pass3||pass4||pass5||pass6);
+	      if (layer<53){
+		bool pass0 = neiId[1]==0 && neiId[2]==0;
+		bool pass1 = neiId[1]==1 && (neiId[2]==0 || neiId[2]==6);
+		bool pass2 = neiId[1]==2 && (neiId[2]==0 || neiId[2]==5);
+		bool pass3 = neiId[1]==3 && (neiId[2]==0 || neiId[2]==4);
+		bool pass4 = neiId[1]==4 && (neiId[2]==0 || neiId[2]==3);
+		bool pass5 = neiId[1]==5 && (neiId[2]==0 || neiId[2]==2);
+		bool pass6 = neiId[1]==6 && (neiId[2]==0 || neiId[2]==1);
+		fail = fail0 || !(pass0||pass1||pass2||pass3||pass4||pass5||pass6);
+	      }
+	      else {
+		bool pass0 = neiId[1]==0 && neiId[2]==0;
+		bool pass1 = neiId[1]==1 && (neiId[2]==0 || neiId[2]==8);
+		bool pass2 = neiId[1]==2 && (neiId[2]==0 || neiId[2]==7);
+		bool pass3 = neiId[1]==3 && (neiId[2]==0 || neiId[2]==6);
+		bool pass4 = neiId[1]==4 && (neiId[2]==0 || neiId[2]==5);
+		bool pass5 = neiId[1]==5 && (neiId[2]==0 || neiId[2]==4);
+		bool pass6 = neiId[1]==6 && (neiId[2]==0 || neiId[2]==3);
+		bool pass7 = neiId[1]==7 && (neiId[2]==0 || neiId[2]==2);
+		bool pass8 = neiId[1]==8 && (neiId[2]==0 || neiId[2]==1);
+		fail = fail0 || !(pass0||pass1||pass2||pass3||pass4||pass5||pass6||pass7||pass8);
+	      }
 	    }
 	    else {
 	      bool failneigh = false;
 	      //fail if one of the neighbour in all 2 layers around is within range
-	      for (unsigned ineigh(0); ineigh<6; ++ineigh){
+	      for (unsigned ineigh(0); ineigh<nNei-1; ++ineigh){
 		bool tmp = 
 		  (lHit.neigh_e_prevlayer(ineigh+1)>threshBeforeAfterMin[iN] && lHit.neigh_e_prevlayer(ineigh+1)<threshBeforeAfterMax) || 
 		  (lHit.neigh_e_nextlayer(ineigh+1)>threshBeforeAfterMin[iN] && lHit.neigh_e_nextlayer(ineigh+1)<threshBeforeAfterMax);

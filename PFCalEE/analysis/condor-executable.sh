@@ -48,7 +48,7 @@ export COMPILER_PATH=${LCG_gcc_home}/lib/gcc/${LCG_arch}-unknown-linux-gnu/${gcc
 export LD_LIBRARY_PATH=${LCG_gcc_home}/${LCG_lib_name}:${LCG_mpfr_home}/lib:${LCG_gmp_home}/lib:${LD_LIBRARY_PATH}
 
 
-echo $LCG_contdir
+
 export QTHOME=/cvmfs/sft.cern.ch/lcg/external/qt/4.8.4/${ARCH}/
 export DAWNHOME=/afs/cern.ch/sw/lcg/external/dawn/3_88a/x86_64-slc5-gcc43-opt/
 export G4DAWNFILE_DEST_DIR=${USERBASE}/DawnFiles/
@@ -70,7 +70,6 @@ export  PYTHONPATH=${PYTHONDIR}:${ROOTSYS}/lib
 ls $USERBASE/userlib/lib
 ls $USERBASE/analysis/lib
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$XERCESCROOT/lib:$HEPMC_DIR/lib:$USERBASE/userlib/lib:$USERBASE/analysis/lib:$FASTJET_INSTALL/lib:$BOOSTSYS/lib:$ROOTSYS/lib:$PYTHONDIR/lib
-echo $LD_LIBRARY_PATH
 export path=$DAWNHOME/bin:$path:$FASTJET_INSTALL/bin:$BOOSTSYS
 
 

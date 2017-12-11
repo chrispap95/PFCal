@@ -100,8 +100,8 @@ public:
     double Etotal(0);
     if (iSR>=nSR_) return 0;
     for(unsigned iL(0);iL<nLayers_;iL++){
-      if(subtractPU) Etotal += subtractedenergySR_[iL][iSR];
-      else Etotal += energySR_[iL][iSR];
+      if(subtractPU) Etotal += absweight_[iL]*subtractedenergySR_[iL][iSR];
+      else Etotal += absweight_[iL]*energySR_[iL][iSR];
     }
     return Etotal;
   };

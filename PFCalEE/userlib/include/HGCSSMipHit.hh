@@ -19,7 +19,7 @@ public:
     y_(0),
     z_(0),
     nfrac_(0){
-    for (unsigned i(0); i<7; ++i){
+    for (unsigned i(0); i<9; ++i){
       neigh_e_samelayer_[i] = 0;
       neigh_e_prevlayer_[i] = 0;
       neigh_e_nextlayer_[i] = 0;
@@ -93,23 +93,23 @@ public:
   };
 
   inline double neigh_e_samelayer(const unsigned idx){
-    if (idx>6) return 0;
+    if (idx>8) return 0;
     return neigh_e_samelayer_[idx];
   };
   inline double neigh_e_prevlayer(const unsigned idx){
-    if (idx>6) return 0;
+    if (idx>8) return 0;
     return neigh_e_prevlayer_[idx];
   };
   inline double neigh_e_nextlayer(const unsigned idx){
-    if (idx>6) return 0;
+    if (idx>8) return 0;
     return neigh_e_nextlayer_[idx];
   };
   inline double neigh_e_prev2layer(const unsigned idx){
-    if (idx>6) return 0;
+    if (idx>8) return 0;
     return neigh_e_prev2layer_[idx];
   };
   inline double neigh_e_next2layer(const unsigned idx){
-    if (idx>6) return 0;
+    if (idx>8) return 0;
     return neigh_e_next2layer_[idx];
   };
   
@@ -125,16 +125,16 @@ public:
   double nfrac_;
 
   //layer-energy of closest neighbours
-  double neigh_e_samelayer_[7];
-  double neigh_e_prevlayer_[7];
-  double neigh_e_nextlayer_[7];
-  double neigh_e_prev2layer_[7];
-  double neigh_e_next2layer_[7];
+  double neigh_e_samelayer_[9];
+  double neigh_e_prevlayer_[9];
+  double neigh_e_nextlayer_[9];
+  double neigh_e_prev2layer_[9];
+  double neigh_e_next2layer_[9];
 
   double xref_neighlay_[5];
   double yref_neighlay_[5];
 
-  ClassDef(HGCSSMipHit,3);
+  ClassDef(HGCSSMipHit,4);
 
 
 };//class

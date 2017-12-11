@@ -807,7 +807,7 @@ int main(int argc, char** argv){//main
       
       //double meanZpos = geomConv.getAverageZ(iL);
       double meanZpos = myDetector.sensitiveZ(iL);
-      
+      double etaBoundary = myDetector.etaBoundary(iL);
       //extend map to include all cells in eta=1.4-3 region
       //in eta ring if saving only one eta ring....
       for (unsigned iB(1); iB<nBins+1;++iB){
@@ -817,7 +817,12 @@ int main(int argc, char** argv){//main
 	}
 	ROOT::Math::XYZPoint lpos = ROOT::Math::XYZPoint(xy.first,xy.second,meanZpos);
 	double eta = lpos.eta();
-	bool passeta = doEtaSel?fabs(eta-etamean)<deta : eta>1.4 && eta<3.0;
+	bool passeta = eta>1.4 && eta<3.0;
+	if (doEtaSel) passeta = fabs(eta-etamean)<deta;
+	else {
+	  if (isScint) passeta = eta>1.4 && eta<=etaBoundary;
+	  else passeta = eta>etaBoundary && eta<3.0;
+	}
 	if (!passeta) continue;
 	MergeCells tmpCell;
 	tmpCell.energy = 0;

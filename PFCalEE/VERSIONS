@@ -8,6 +8,12 @@
 #####################
 Nothing for the moment
 
+V08-01-00
+----------
+* debug Scintillator part of Si-Scint divide for back of FH and BH: fix non-sense cellid and x,y positions.
+* Fix noise generation to happen only in valid eta ranges (in Si layers, below eta boundary, in scint layers, above eta boundary...)
+
+
 V08-00-00
 ----------
 * Update geometry to TDR as of review end-of-June 2017

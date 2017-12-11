@@ -168,7 +168,7 @@ void EventAction::EndOfEventAction(const G4Event* g4evt)
 
 	for (unsigned iSiHit(0); iSiHit<(*detector_)[i].getSiHitVec(idx).size();++iSiHit){
 	  G4SiHit lSiHit = (*detector_)[i].getSiHitVec(idx)[iSiHit];
-	  HGCSSSimHit lHit(lSiHit,idx,is_scint? (i<57?geomConv_->squareMap1():geomConv_->squareMap2()): (shape_==4 ?geomConv_->squareMap() : shape_==2?geomConv_->diamondMap():shape_==3?geomConv_->triangleMap():geomConv_->hexagonMap()));
+	  HGCSSSimHit lHit(lSiHit,idx,is_scint? (i<57?geomConv_->squareMap1():geomConv_->squareMap2()): (shape_==4 ?geomConv_->squareMap() : shape_==2?geomConv_->diamondMap():shape_==3?geomConv_->triangleMap():geomConv_->hexagonMap()),CELL_SIZE_X,is_scint?true:false);
 	  
 	  isInserted = lHitMap.insert(std::pair<unsigned,HGCSSSimHit>(lHit.cellid(),lHit));
 	  if (!isInserted.second) isInserted.first->second.Add(lSiHit);

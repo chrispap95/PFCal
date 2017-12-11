@@ -9,6 +9,7 @@
 #include "TNtuple.h"
 #include "TH2F.h"
 #include "TH1F.h"
+#include "TProfile.h"
 #include "TLine.h"
 #include "TCanvas.h"
 #include "TStyle.h"
@@ -514,10 +515,10 @@ int plotEGReso(){//main
 
   SetTdrStyle();
 
-  bool dovsE = false;
+  bool dovsE = true;
   bool processNoFitFiles = false;
 
-  bool doBackLeakCor = true;
+  bool doBackLeakCor = false;
 
   const unsigned nIC = 1;
   const unsigned ICval[nIC] = {3};//0,1,2,3,4,5,10,15,20,50};
@@ -545,7 +546,7 @@ int plotEGReso(){//main
 
   const unsigned nEvtMin = 150;
 
-  TString pSuffix = "";
+  TString pSuffix = doBackLeakCor?"backLeakCor":"";
 
   
   const unsigned nV = 1;
@@ -617,7 +618,7 @@ int plotEGReso(){//main
   TCanvas *mycCalibEta = new TCanvas("mycCalibEta","mycCalibEta",1500,1000);
   TCanvas *mycOffsetEta = new TCanvas("mycOffsetEta","mycOffsetEta",1500,1000);
   
-  const unsigned nCanvas = 3;  
+  const unsigned nCanvas = 4;  
   TCanvas *myc[nCanvas];
   for (unsigned iC(0);iC<nCanvas;++iC){
     std::ostringstream lName;
@@ -652,6 +653,7 @@ int plotEGReso(){//main
 	label << "/CalibReso";
 	if (dovsE) label << "_vsE";
 	label << "_IC" << ICval[ic];
+	label << pSuffix;
 	label << ".root";
 	fcalib = TFile::Open(label.str().c_str(),"RECREATE");
 	
@@ -662,7 +664,8 @@ int plotEGReso(){//main
 	  
 	  etaval[ieta] = eta[ieta]/10.;
 	  etaerr[ieta] = 0;
-	  
+	  double backLeakCor[nGenEnAll][nSR];
+
 	  for (unsigned ipu(0); ipu<nPu; ++ipu){//loop on pu
 	    //if (ieta<2 && ipu==2) continue;
 	    unsigned puOption = pu[ipu];
@@ -722,7 +725,8 @@ int plotEGReso(){//main
 	    TH2F *p_ErecovsEback[nGenEn][nSR];
 	    TGraphErrors *calibRecoFit[nSR];
 	    TGraphErrors *calibRecoDelta[nSR];
-	    
+	    TGraphErrors *corrBackLeakFit[nSR];
+
 	    //draw calibration curves
 	    for (unsigned iSR(0); iSR<nSR;++iSR){//loop on signal region
 	      TString srStr = "";
@@ -739,6 +743,9 @@ int plotEGReso(){//main
 	      calibRecoFit[iSR]->SetLineColor(1);
 	      calibRecoDelta[iSR] = (TGraphErrors *) calibRecoFit[iSR]->Clone("calibRecoDelta"+srStr);
 	      resoRecoFit[ipu][ieta][iSR] = (TGraphErrors *) calibRecoFit[iSR]->Clone("resoRecoFit"+srStr);
+
+	      if (doBackLeakCor) corrBackLeakFit[iSR] = (TGraphErrors *) calibRecoFit[iSR]->Clone("corrBackLeakFit"+srStr);
+
 	    }
 	    
 	    //get calib and offset from 0 pu file for each SR.
@@ -807,6 +814,7 @@ int plotEGReso(){//main
 		    if (iL==0) lNameTot << "20.3628*energy_" << iL << "_SR" << iSR ;
 		    else if (iL==nLayers-1) lNameTot << "+13.0629*energy_" << iL << "_SR" << iSR ;
 		    else lNameTot << "+10.0166*energy_" << iL << "_SR" << iSR ;
+		    //use always largest area for correction
 		    if (iL==nLayers-4) lNameBack << "10.0166*energy_" << iL << "_SR" << iSR ;
 		    else if (iL==nLayers-1) lNameBack << "+13.0629*energy_" << iL << "_SR" << iSR ;
 		    else if (iL>nLayers-4) lNameBack << "+10.0166*energy_" << iL << "_SR" << iSR ;
@@ -814,20 +822,19 @@ int plotEGReso(){//main
 		}
 		else lNameTot << "wgtEtotal";///" << tanh(etaval[ieta]);
 		if (iSR==4){
-		  std::cout << lName.str() << std::endl;
-		  return 1;
+		  //std::cout << lName.str() << std::endl;
+		  //return 1;
 		}
-		if (ipu>0) lName << " - " << offset[0][ieta][iSR] << ")/" << calib[0][ieta][iSR];
 
-		
-		if (doBackLeakCor && ipu>0) {
+		if (doBackLeakCor && ipu==1) {
 		  mycE2D[iE]->cd(iSR+1);
 		  lName.str("");
 		  lName << "(";
 		  lName << lNameTot.str();
 		  lName << " - " << offset[0][ieta][iSR] << ")/" << calib[0][ieta][iSR];
-		  lName << ":" << lNameBack.str() << "/" << lNameTot.str();
-		  ltree[ieta][ipu][oldIdx[iE]]->Draw(lName.str().c_str(),"","");
+		  lName << ":(" << lNameBack.str() << ")/(" << lNameTot.str() << ")";
+		  std::cout << lName.str().c_str() << std::endl;
+		  ltree[ieta][ipu][oldIdx[iE]]->Draw(lName.str().c_str(),"","colz");
 		  lName.str("");
 		  lName << "energy" << genEn[iE] << "_SR" << iSR << "_vsBackFraction";
 		  p_ErecovsEback[iE][iSR] = (TH2F*)(gPad->GetPrimitive("htemp"))->Clone(lName.str().c_str()); // 2D
@@ -836,8 +843,39 @@ int plotEGReso(){//main
 		    std::cout << " -- ERROR, pointer for histogram " << lName.str() << " is null." << std::endl;
 		    return 1;
 		  }
-		}
 
+		  p_ErecovsEback[iE][iSR]->SetTitle(";E_{24-27}/E_{tot};E_{tot} (GeV)");
+		  lName << "_pfx";
+		  TProfile *tmpProf = p_ErecovsEback[iE][iSR]->ProfileX(lName.str().c_str());
+		  tmpProf->SetMarkerStyle(20);
+		  tmpProf->SetMarkerColor(1);
+		  tmpProf->SetLineColor(1);
+		  p_ErecovsEback[iE][iSR]->Draw("colz");
+		  tmpProf->Draw("PEsame");
+		  tmpProf->Fit("pol1","","same");
+
+		  //tmpProf->SetStats(1);
+		  //gStyle->SetOptFit(1111);
+		  TF1 *fitcor = (TF1*)tmpProf->GetFunction("pol1");
+		  if (!fitcor) {
+		    std::cout << " Fit failed for back leakage correction" << std::endl;
+		    return 1;
+		  }
+
+		  backLeakCor[oldIdx[iE]][iSR] = fitcor->GetParameter(1);
+
+		  char buf[500];
+		  TLatex lat;
+		  sprintf(buf,"E=%3.3f #times f_{back} + %3.3f",backLeakCor[oldIdx[iE]][iSR],fitcor->GetParameter(0));
+		  lat.DrawLatexNDC(0.25,0.85,buf);
+
+		  Int_t np=corrBackLeakFit[iSR]->GetN();
+		  //if (!dovsE) corrBackLeakFit[iSR]->SetPoint(np,genEn[iE],backLeakCor[oldIdx[iE]][iSR]);
+		  corrBackLeakFit[iSR]->SetPoint(np,E(genEn[iE],eta[ieta]),backLeakCor[oldIdx[iE]][iSR]);
+		  corrBackLeakFit[iSR]->SetPointError(np,0.0,fitcor->GetParError(1));
+
+		  //if (iSR==4) return 1;
+		}
 
 		mycE[iE]->cd(iSR+1);
 
@@ -845,8 +883,15 @@ int plotEGReso(){//main
 		if (ipu>0) lName << "(";
 		lName << lNameTot.str();
 		if (ipu>0) lName << " - " << offset[0][ieta][iSR] << ")/" << calib[0][ieta][iSR];
-		
-		ltree[ieta][ipu][oldIdx[iE]]->Draw(lName.str().c_str(),"","");
+		if (doBackLeakCor && ipu>0 && E(genEn[iE],eta[ieta])>300) {
+		  lName << " - " << backLeakCor[oldIdx[iE]][iSR] << "*(" << lNameBack.str() << ")/(" << lNameTot.str() << ")";
+		}
+
+		std::ostringstream lcut;
+		lcut << lName.str() << ">0.5*";
+		lcut << E(genEn[iE],eta[ieta]);
+
+		ltree[ieta][ipu][oldIdx[iE]]->Draw(lName.str().c_str(),lcut.str().c_str(),"");
 		lName.str("");
 		lName << "energy" << genEn[iE] << "_SR" << iSR ;
 		p_Ereco[iE][iSR] = (TH1F*)(gPad->GetPrimitive("htemp"))->Clone(lName.str().c_str()); // 1D
@@ -902,11 +947,15 @@ int plotEGReso(){//main
 		}
 		
 		Int_t np=calibRecoFit[iSR]->GetN();
-		if (!dovsE) calibRecoFit[iSR]->SetPoint(np,genEn[iE],lres.mean);
-		else calibRecoFit[iSR]->SetPoint(np,E(genEn[iE],eta[ieta]),lres.mean);
+		//if (!dovsE) calibRecoFit[iSR]->SetPoint(np,genEn[iE],lres.mean);
+		//else 
+		calibRecoFit[iSR]->SetPoint(np,E(genEn[iE],eta[ieta]),lres.mean);
 		calibRecoFit[iSR]->SetPointError(np,0.0,lres.meanerr);
 		
+		//use truth: residual calib won't affect resolution....
 		double reso = fabs(lres.sigma/lres.mean);
+		//if (ipu>1) reso = fabs(lres.sigma/(dovsE?E(genEn[iE],eta[ieta]):genEn[iE]));
+		if (ipu>1) reso = fabs(lres.sigma/(E(genEn[iE],eta[ieta])));
 		if (!dovsE) resoRecoFit[ipu][ieta][iSR]->SetPoint(np,genEn[iE],reso);
 		else resoRecoFit[ipu][ieta][iSR]->SetPoint(np,E(genEn[iE],eta[ieta]),reso);
 		double errFit = reso*sqrt(pow(lres.sigmaerr/lres.sigma,2)+pow(lres.meanerr/lres.mean,2));
@@ -914,12 +963,22 @@ int plotEGReso(){//main
 		
 	      }//loop on SR
 	      
+	      if (doBackLeakCor && ipu==1){
+		saveName.str("");
+		saveName << plotDir << "/ErecovsbackFraction_eta" << eta[ieta] << "_pu" << puOption;
+		saveName << "_E" << genEn[iE] << pSuffix;
+		mycE2D[iE]->Update();
+		mycE2D[iE]->Print((saveName.str().c_str()+pSuffix)+".pdf");
+		mycE2D[iE]->Print((saveName.str().c_str()+pSuffix)+".C");
+	      }
+
 	      saveName.str("");
 	      saveName << plotDir << "/Ereco_eta" << eta[ieta] << "_pu" << puOption;
 	      if (ipu==0) saveName << "raw";
 	      saveName << "_E" << genEn[iE] << pSuffix;
 	      mycE[iE]->Update();
 	      mycE[iE]->Print((saveName.str().c_str()+pSuffix)+".pdf");
+	      mycE[iE]->Print((saveName.str().c_str()+pSuffix)+".C");
 	      
 	      //fill sigma PU for lower energies
 	      if (ipu>1){// && genEn[iE]>5 && genEn[iE]<40) {
@@ -951,7 +1010,7 @@ int plotEGReso(){//main
 					    calibErr[ipu][ieta][iSR],
 					    offset[ipu][ieta][iSR],
 					    offsetErr[ipu][ieta][iSR],
-					    eta[ieta],dovsE);
+					    eta[ieta],true);
 	      upper->cd();
 	      char buf[500];
 	      sprintf(buf,"#gamma #eta=%3.1f + PU %d",etaval[ieta],pu[ipu]);
@@ -971,8 +1030,10 @@ int plotEGReso(){//main
 	    if (ipu==0) lsave << "CalibMipToGeV";
 	    else lsave << "Calib";
 	    lsave << "_eta" << eta[ieta] << "_pu" << puOption << pSuffix;
-	    if (dovsE) lsave << "_vsE";
+	    //if (dovsE) 
+	    lsave << "_vsE";
 	    myc[0]->Print((lsave.str()+".pdf").c_str());
+	    myc[0]->Print((lsave.str()+".C").c_str());
 
 	    //plot reso
 	    for (unsigned iSR(0); iSR<nSR;++iSR){//loop on signal region
@@ -1012,6 +1073,7 @@ int plotEGReso(){//main
 		//return 1;	    
 	      }
 
+
 	      lsave.str("");
 	      lsave << "SR" << iSR;
 	      fcalib->mkdir(lsave.str().c_str());
@@ -1019,7 +1081,7 @@ int plotEGReso(){//main
 	      calibRecoFit[iSR]->Write();
 	      calibRecoDelta[iSR]->Write();
 	      resoRecoFit[ipu][ieta][iSR]->Write();
-
+	      if (doBackLeakCor && ipu==1) corrBackLeakFit[iSR]->Write();
 	    }//loop on SR
 
 	    myc[1]->Update();
@@ -1030,8 +1092,29 @@ int plotEGReso(){//main
 	    lsave << "_eta" << eta[ieta] << "_pu" << puOption << pSuffix;
 	    if (dovsE) lsave << "_vsE";
 	    myc[1]->Print((lsave.str()+".pdf").c_str());
+	    myc[1]->Print((lsave.str()+".C").c_str());
 
-
+	    if (doBackLeakCor && ipu==1){
+	      for (unsigned iSR(0); iSR<nSR;++iSR){//loop on signal region
+		//plot back correction slope
+		if (doBackLeakCor && ipu==1){
+		  myc[3]->cd(iSR+1);
+		  //if (!dovsE) corrBackLeakFit[iSR]->SetTitle(";p_{T} (GeV);back cor");
+		  corrBackLeakFit[iSR]->SetTitle(";E (GeV);back cor");
+		  corrBackLeakFit[iSR]->Draw("APE");
+		}
+	      }
+	      myc[3]->Update();
+	      lsave.str("");
+	      lsave << plotDir << "/";
+	      lsave << "BackLeakCor";
+	      lsave << "_eta" << eta[ieta] << "_pu" << puOption << pSuffix;
+	      //if (dovsE) 
+	      lsave << "_vsE";
+	      myc[3]->Print((lsave.str()+".pdf").c_str());
+	      myc[3]->Print((lsave.str()+".C").c_str());
+	      //return 1;
+	    }
 
 	  }//loop on pu
 	}//loop on eta
@@ -1119,13 +1202,13 @@ int plotEGReso(){//main
 	  lsave << plotDir << "/CalibSlopevsEta_pu" << ipu;
 	  if (ipu==0) lsave << "raw";
 	  if (dovsE) lsave << "_vsE";
-	  lsave << ".pdf";
+	  lsave << pSuffix << ".pdf";
 	  mycCalibEta->Print(lsave.str().c_str());
 	  lsave.str("");
 	  lsave << plotDir << "/CalibOffsetvsEta_pu" << ipu;
 	  if (ipu==0) lsave << "raw";
 	  if (dovsE) lsave << "_vsE";
-	  lsave << ".pdf";
+	  lsave << pSuffix << ".pdf";
 	  mycOffsetEta->Update();
 	  mycOffsetEta->Print(lsave.str().c_str());
 
@@ -1195,6 +1278,7 @@ int plotEGReso(){//main
 	    std::ostringstream lsave;
 	    lsave << plotDir << "/Resolution_pu" << pu[ipu] << "_SR" << iSR;
 	    if (dovsE) lsave << "_vsE";
+	    lsave << pSuffix;
 	    mycReso->Print((lsave.str()+".pdf").c_str());
 	    mycReso->Print((lsave.str()+".C").c_str());
 	  

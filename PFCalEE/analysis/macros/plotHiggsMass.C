@@ -52,20 +52,23 @@ int plotHiggsMass(){//main
   double sigmaerr[nP][nV];
   
   TFile *f[nP];
-  f[0] = TFile::Open("/afs/cern.ch/work/a/amagnan/PFCalEEAna/HGCalTDR//gittestV8/version63/model2/HggLarge/pu140.root");
+  f[0] = TFile::Open("/afs/cern.ch/work/a/amagnan/PFCalEEAna/HGCalTDR//gittestV8/version63/model2/HggLarge/pu0.root");
   f[1] = TFile::Open("/afs/cern.ch/work/a/amagnan/PFCalEEAna/HGCalTDR//gittestV8/version63/model2/HggLarge/pu140.root");
   f[2] = TFile::Open("/afs/cern.ch/work/a/amagnan/PFCalEEAna/HGCalTDR//gittestV8/version63/model2/HggLarge/pu200.root");
 
-  TCanvas *mycfit[2];
+  TCanvas *mycfit[3];
   mycfit[0] = new TCanvas("myc1","myc1",1500,1000);
   mycfit[1] = new TCanvas("myc2","myc2",1500,1000);
+  mycfit[2] = new TCanvas("myc3","myc3",1500,1000);
   if (nV==3){
     mycfit[0]->Divide(2,2);
     mycfit[1]->Divide(2,2);
+    mycfit[2]->Divide(2,2);
   }
   else {
-    mycfit[0]->Divide(3,2);
-    mycfit[1]->Divide(3,2);
+    mycfit[0]->Divide(2,1);
+    mycfit[1]->Divide(2,1);
+    mycfit[2]->Divide(2,1);
   }
   TCanvas *myc = new TCanvas("myc","myc",1);
   gStyle->SetOptStat("eMRuo");
@@ -83,11 +86,13 @@ int plotHiggsMass(){//main
     //hMass[1] = (TH1F*)gDirectory->Get("p_position_vtxsmear_trueE");
     //hMass[2] = (TH1F*)gDirectory->Get("p_angle_trueE");
     hMass[0] = (TH1F*)gDirectory->Get("p_trueDir_recoE");
+    if (!hMass[0]) return 1;
     //hMass[3] = (TH1F*)gDirectory->Get("p_position_recoE");
     //hMass[4] = (TH1F*)gDirectory->Get("p_position_vtxsmear_recoE");
     //hMass[6] = (TH1F*)gDirectory->Get("p_angle_recoE");
    
     TH1F *trueM = (TH1F*)gDirectory->Get("p_trueDir_trueE");
+    if (!trueM) return 1;
     mycfit[ipu]->cd(1);
     trueM->Draw();
 
@@ -97,6 +102,7 @@ int plotHiggsMass(){//main
       hMass[iV]->Draw();
       hMass[iV]->Fit("gaus","+","same",118,132);
       TF1 *fit = (TF1*)hMass[iV]->GetFunction("gaus");
+      if (!fit) return 1;
       mean[ipu][iV] = fit->GetParameter(1);
       meanerr[ipu][iV] = fit->GetParError(1);
       sigma[ipu][iV] = fit->GetParameter(2);
@@ -111,6 +117,8 @@ int plotHiggsMass(){//main
     mycfit[ipu]->Print(lsave.str().c_str());
 
   }
+
+  return 1;
 
   myc->cd();
   gPad->SetGridy(1);
@@ -162,8 +170,8 @@ int plotHiggsMass(){//main
 
     TLatex lat;
     lat.DrawLatexNDC(0.1,0.92,"Pythia gg#rightarrow Higgs, H#rightarrow #gamma#gamma");
-    lat.DrawLatexNDC(0.2,0.85,"1.5 < #eta_{#gamma^{1}} < 2.8, p_{T}>20 GeV");
-    lat.DrawLatexNDC(0.2,0.8,"1.5 < #eta_{#gamma^{2}} < 2.8, p_{T}>20 GeV");
+    lat.DrawLatexNDC(0.2,0.85,"1.6 < #eta_{#gamma^{1}} < 2.8, p_{T}>40 GeV");
+    lat.DrawLatexNDC(0.2,0.8,"1.6 < #eta_{#gamma^{2}} < 2.8, p_{T}>40 GeV");
     myc->Update();
     if (iH==0) myc->Print("TDRPLOTS/SummaryHiggsMass.pdf");
     else {

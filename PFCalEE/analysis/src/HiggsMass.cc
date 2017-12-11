@@ -21,11 +21,38 @@ void HiggsMass::setTruthInfo(const TLorentzVector & g1,
   tvtx2_ = vtx2;
 }
 
+
 void HiggsMass::initialiseHistograms(TFile *fout, 
 				     const std::string folder){
 
   fout->mkdir(folder.c_str());
   fout->cd(folder.c_str());
+
+  tree_ = new TTree("Photons","higgs photon 4 vectors");
+  tree_->Branch("eventIndex",&evtIdx_);
+  //Higgs
+  tree_->Branch("MH",&MH_);
+  tree_->Branch("pTH",&pTH_);
+  tree_->Branch("etaH",&etaH_);
+  tree_->Branch("truthMH",&truthMH_);
+  tree_->Branch("truthpTH",&truthpTH_);
+  tree_->Branch("truthetaH",&truthetaH_);
+
+  //photon1
+  tree_->Branch("E1",&E1_);
+  tree_->Branch("eta1",&eta1_);
+  tree_->Branch("phi1",&phi1_);
+  tree_->Branch("truthE1",&truthE1_);
+  tree_->Branch("trutheta1",&trutheta1_);
+  tree_->Branch("truthphi1",&truthphi1_);
+
+  //photon2
+  tree_->Branch("E2",&E2_);
+  tree_->Branch("eta2",&eta2_);
+  tree_->Branch("phi2",&phi2_);
+  tree_->Branch("truthE2",&truthE2_);
+  tree_->Branch("trutheta2",&trutheta2_);
+  tree_->Branch("truthphi2",&truthphi2_);
 
   p_trueDir_trueE = new TH1F("p_trueDir_trueE",";true M_{H} (GeV)",400,0,200);
   p_trueDir_recoE = new TH1F("p_trueDir_recoE",";M_{H} (GeV) [P_{true},E_{reco}]",400,0,200);
@@ -118,6 +145,31 @@ void HiggsMass::fillHistograms(){
   p_phi_gamma2[1]->Fill(tg2.Phi());
 
   TLorentzVector th = tg1_+tg2_;
+
+  MH_ = rh.M();
+  pTH_ = rh.Pt();
+  etaH_ = rh.Eta();
+  truthMH_ = th.M();
+  truthpTH_ = th.Pt();
+  truthetaH_ = th.Eta();
+
+  //keep truth associated to reco!!!
+  E1_ = g1_.E();
+  eta1_ = g1_.Eta();
+  phi1_ = g1_.Phi();
+  truthE1_ = tg1_.E();
+  trutheta1_ = tg1_.Eta();
+  truthphi1_ = tg1_.Phi();
+
+  E2_ = g2_.E();
+  eta2_ = g2_.Eta();
+  phi2_ = g2_.Phi();
+  truthE2_ = tg2_.E();
+  trutheta2_ = tg2_.Eta();
+  truthphi2_ = tg2_.Phi();
+
+  tree_->Fill();
+
 
   p_pTvseta[1]->Fill(th.Eta(),th.Pt());
   p_MvspT[1]->Fill(th.Pt(),th.M());

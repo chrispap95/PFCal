@@ -108,6 +108,9 @@ int main(int argc, char** argv){//main
 
   const double neighRadius = 13;//mm for 6 closest neighbours
 
+  const double sizeFH = 0.01745;
+  const double sizeBH = 0.02182;
+
   //global threshold to reduce size of noise hits
   const double threshMin = 0.5;
   //save only central hits with 0.5 mips...
@@ -210,8 +213,8 @@ int main(int argc, char** argv){//main
 
   //square map for BHCAL
   //square map for BHCAL
-  geomConv.initialiseSquareMap1(1.4,3.0,0,2*TMath::Pi(),0.01745);//eta phi segmentation
-  geomConv.initialiseSquareMap2(1.4,3.0,0,2*TMath::Pi(),0.02182);//eta phi segmentation
+  geomConv.initialiseSquareMap1(1.4,3.0,0,2*TMath::Pi(),sizeFH);//eta phi segmentation
+  geomConv.initialiseSquareMap2(1.4,3.0,0,2*TMath::Pi(),sizeBH);//eta phi segmentation
   std::vector<unsigned> granularity;
   granularity.resize(myDetector.nLayers(),1);
   geomConv.setGranularity(granularity);
@@ -300,7 +303,13 @@ int main(int argc, char** argv){//main
 	isScint = subdet.isScint;
 	TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap() : shape==2?geomConv.diamondMap() : shape==3? geomConv.triangleMap(): geomConv.hexagonMap();
 
-	unsigned cellid = map->FindBin(lHit.get_x(),lHit.get_y());
+	unsigned cellid = 0;
+	if (isScint){
+	  ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
+	  cellid = map->FindBin(pos.eta(),pos.phi());
+	} else {
+	  cellid = map->FindBin(lHit.get_x(),lHit.get_y());
+	}
 	geomConv.fill(lHit.layer(),lHit.energy(),0,cellid,lHit.get_z());
       }//loop on hits
 
@@ -365,7 +374,8 @@ int main(int argc, char** argv){//main
     std::vector<double> hitEnergy[nNoise];
     for (unsigned iN(0); iN<nNoise;++iN){
       miphitvec[iN].clear();
-      //std::cout << " vec pointer event loop " << iN << " " << &miphitvec[iN] << std::endl;
+      miphitvec[iN].reserve(nHitsInit);
+      std::cout << " vec pointer event loop " << iN << " " << &miphitvec[iN] << " size " <<  miphitvec[iN].size() << std::endl;
       hitEnergy[iN].clear();
       hitEnergy[iN].resize((*rechitvec).size(),-1);
     }
@@ -473,8 +483,7 @@ int main(int argc, char** argv){//main
 	if (neighlay<0) neighlay+=5;
 	if (neighlay>(nLayers-1)) neighlay-=5;
 	//bridge for the si-scint divide
-	int oldneighlay = hitlayer+il;
-	if (oldneighlay<0) oldneighlay+=5;
+	int oldneighlay = hitlayer<52? neighlay : hitlayer+il;
 	if (oldneighlay>(myDetector.nLayers()-1)) oldneighlay-=5;
 	if (hitlayer>52 && oldneighlay<53) oldneighlay -= 17;
 	double rRef = zpos[oldneighlay]/cos(hittheta);
@@ -484,7 +493,7 @@ int main(int argc, char** argv){//main
 	bool isScint = subdet.isScint;
 	TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap(): geomConv.hexagonMap();
 	std::map<int,std::pair<double,double> > & geom = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareGeom1:geomConv.squareGeom2):geomConv.hexaGeom;
-	unsigned cellid = map->FindBin(xRef,yRef);
+	unsigned cellid = isScint?map->FindBin(hiteta,hitphi):map->FindBin(xRef,yRef);
 	xyRef[il+2] = geom[cellid];
 	myHit[0].set_xref_neighlay(il+2,xyRef[il+2].first);
 	myHit[0].set_yref_neighlay(il+2,xyRef[il+2].second);
@@ -503,28 +512,42 @@ int main(int argc, char** argv){//main
 	     (newhitlayer>1 && newhitlayer<(nLayers-2) && abs(newlayer-newhitlayer)<3)
 	     ){
 
+	  const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(lHit.layer());
+	  bool isScint = subdet.isScint;
+	  //multiply by 1.1 to avoid rounding issues
+	  double sizeEtaPhi = subdet.type==DetectorEnum::BHCAL1?sizeFH*1.1 : sizeBH*1.1;
 	  //double rxyz = sqrt(pow(lHit.get_x(),2)+pow(lHit.get_y(),2)+pow(lHit.get_z(),2));
 	  int lidx = newlayer-newhitlayer+2;
 	  if (lidx>4) lidx-=5;
 	  else if (lidx<0) lidx+=5;
-	  double dx = lHit.get_x()-xyRef[lidx].first;
-	  double dy = lHit.get_y()-xyRef[lidx].second;
+	  double dx = isScint? lHit.eta()-xyRef[lidx].first : lHit.get_x()-xyRef[lidx].first;
+	  double dy = isScint? lHit.phi()-xyRef[lidx].second : lHit.get_y()-xyRef[lidx].second;
 	  //double dx = lHit.get_x()-hitposx;
 	  //double dy = lHit.get_y()-hitposy;
 	  double radius = sqrt(pow(dx,2)+pow(dy,2));
-	  if (radius<neighRadius){
+	  if ((isScint && fabs(dx)<sizeEtaPhi && fabs(dy)<sizeEtaPhi) || (!isScint && radius<neighRadius)){
 	    //use -0.1 to protect against double precision
-	    int index = dy<-0.1? (dx<-0.1?1:fabs(dx)<0.01?2:3) : (dx<-0.1?4:fabs(dx)<0.01?5:6);
+	    int index = 0;
+	    if (isScint){
+	      if (dy<-0.01) index = dx>0.01? 3 : dx<-0.01 ? 1 : 2;
+	      else if (dy>0.01) index = dx>0.01? 8 : dx<-0.01 ? 6 : 7;
+	      else index = dx>0.01? 5 : dx<-0.01 ? 4 : 0;
+	    } else {
+	      index = dy<-0.1? (dx<-0.1?1:fabs(dx)<0.01?2:3) : (dx<-0.1?4:fabs(dx)<0.01?5:6);
+	    }
+
 	    if (fabs(dx)<0.01&&fabs(dy)<0.01) index = 0;
-	    //if (iH%1000==0) 
-	    //std::cout << " Hit " << iH << " l " << layer 
-	    //<< " dx " << dx << " dy " << dy 
-	    //<< " r " << radius << " idx " << index
-	    //<< " xy " << lHit.get_x() << "," << lHit.get_y()
-	    //	      << " xyref " << hitposx << "," << hitposy
-	    //	      << " eta,phi " << lHit.eta() << "," << lHit.phi()
-	    //	      << " eta,phiref " << hiteta << "," << hitphi
-	    //	      << std::endl;
+	    if (isScint && iH%1000==0){
+	      std::cout << " Hit " << iH << " l " << hitlayer 
+			<< " nl " << lHit.layer()
+			<< " dx " << dx << " dy " << dy 
+			<< " r " << radius << " idx " << index
+			<< " xy " << lHit.get_x() << "," << lHit.get_y()
+			<< " xyref " << xyRef[lidx].first << "," << xyRef[lidx].second
+			<< " eta,phi " << lHit.eta() << "," << lHit.phi()
+			<< " eta,phiref " << hiteta << "," << hitphi
+			<< std::endl;
+	    }
 	    for (unsigned iN(0); iN<nNoise;++iN){
 	      if (newlayer==newhitlayer) {
 		//fill neighbour energies

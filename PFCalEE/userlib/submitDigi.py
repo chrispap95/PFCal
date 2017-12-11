@@ -23,6 +23,7 @@ parser.add_option('-d', '--datatype'    ,    dest='datatype'           , help='d
 parser.add_option('-f', '--datafile'    ,    dest='datafile'           , help='full path to HepMC input file', default='data/example_MyPythia.dat')
 parser.add_option('-n', '--nevts'       ,    dest='nevts'              , help='number of events to generate' , default=1000,    type=int)
 parser.add_option('-o', '--out'         ,    dest='out'                , help='output directory'             , default=os.getcwd() )
+parser.add_option(      '--nPuVtx'      ,    dest='nPuVtx'             , help='pileup scenarios (csv) [%h]',   default='0,140,200')
 parser.add_option('-e', '--eos'         ,    dest='eos'                , help='eos path to save root file to EOS',         default='')
 parser.add_option('-E', '--eosin'       ,    dest='eosin'              , help='eos path to read input root file from EOS',  default='')
 parser.add_option('-g', '--gun'         ,    action="store_true",  dest='dogun'              , help='use particle gun.')
@@ -50,8 +51,11 @@ if opt.dogun :
 
 #if opt.dogun : enlist=[2,5,10,20,40,60,80,100,150,200]#,300,400,500]
 
+#No label: for 100um Si->will use small cell PU production!
 #label=''
+#for using Si noise values for 300um and large hexagon cells
 #label='300u'
+#for using Si noise values for 200um and large hexagon cells
 label='200u'
 #label='v5_30'
 #label='v5_28'
@@ -71,11 +75,11 @@ elif opt.version==63:
     if (label==''):
         INPATHPU="root://eoscms//eos/cms/store/cmst3/group/hgcal/HGCalTDR/gittestV8/MinBiasSmall/"
     else :
-        INPATHPU="root://eoscms//eos/cms/store/group/dpg_hgcal/comm_hgcal/amagnan/HGCalTDR/gittestV8/MinBiasLarge/"
+        INPATHPU="root://eoscms//eos/cms/store/group/dpg_hgcal/comm_hgcal/amagnan/HGCalTDR/gitV08-01-00/MinBiasLarge/"
 
 
 #nPuVtxlist=[0,140,200]
-nPuVtxlist=[0,200,140]
+nPuVtxlist=[int(x) for x in opt.nPuVtx.split(',')]
 
 #in %
 interCalibList=[3];#0,1,2,3,4,5,10,15,20,50]
