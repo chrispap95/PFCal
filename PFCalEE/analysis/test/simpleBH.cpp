@@ -304,7 +304,7 @@ int main(int argc, char** argv){//main
   TH2F* h_sxy50 = new TH2F("h_sxy50","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
   TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
-  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,5.);
+  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.5,1.1);
 
   
   ///////////////////////////////////////////////////////
@@ -522,7 +522,7 @@ int main(int argc, char** argv){//main
       //miptree->Fill();
 
     geomConv.initialiseHistos();
-
+    ievtRec++;
   }//loop on entries
 
   if(debug) std::cout<<"writing files"<<std::endl;
