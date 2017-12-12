@@ -76,7 +76,6 @@ int main(int argc, char** argv){//main
   config.add_options()
     //Input output and config options //->required()
     ("pNevts,n",       po::value<unsigned>(&pNevts)->default_value(0))
-    //("inFilePath,i",   po::value<std::string>(&inFilePath)->required())
     ("outFilePath,o",  po::value<std::string>(&outFilePath)->required())
     ("filePath,i",     po::value<std::string>(&filePath)->required())
     ("digifilePath", po::value<std::string>(&digifilePath)->default_value(""))
@@ -97,7 +96,6 @@ int main(int argc, char** argv){//main
   std::cout << " -- Input parameters: " << std::endl
             << " -- Input file path: " << filePath << std::endl
             << " -- Digi Input file path: " << digifilePath << std::endl
-    //	    << " -- Input file path: " << inFilePath << std::endl
     	    << " -- Output file path: " << outFilePath << std::endl
 	    << " -- mean eta: " << etamean 
 	    << std::endl
@@ -193,31 +191,7 @@ int main(int argc, char** argv){//main
 
 
 
-  /*
 
-  TChain *lTree = new TChain("RecoTree");
-  TFile * recFile = 0;
-  if (nRuns == 0){
-    if (!testInputFile(inFilePath,recFile)) return 1;
-    lTree->AddFile(inFilePath.c_str());
-  }
-  else {
-    for (unsigned i(0);i<nRuns;++i){
-      std::ostringstream lstrrec;
-      lstrrec << inFilePath << "_run" << i << ".root";
-      if (!testInputFile(lstrrec.str(),recFile)) continue;
-      lTree->AddFile(lstrrec.str().c_str());
-    }
-  }
-  if (!lTree){
-    std::cout << " -- Error, tree RecoTree cannot be opened. Exiting..." << std::endl;
-    return 1;
-  }
-
-  std::cout << " Trees added." << std::endl;
-  */
-
-  //HGCSSInfo * info=(HGCSSInfo*)recFile->Get("Info");
 
   //assert(info);
 
@@ -279,12 +253,7 @@ int main(int argc, char** argv){//main
   }
   outputFile->cd();
 
-  /*
-  TTree *miptree=new TTree("MipTree","HGC MipAnalysis tree");
-  HGCSSSimpleHitVec miphitvec;
-  const unsigned nHitsInit = 20000;
-  miphitvec.resize(nHitsInit);//,dummy);
-  */
+
 
 
   std::ostringstream label;
@@ -335,6 +304,8 @@ int main(int argc, char** argv){//main
   TH2F* h_sxy50 = new TH2F("h_sxy50","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
   TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
+  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,5.);
+
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -361,9 +332,7 @@ int main(int argc, char** argv){//main
   std::vector<HGCSSGenParticle> * genvec = 0;
   unsigned nPuVtx = 0;
 
-  //lRecTree->SetBranchAddress("HGCSSEvent",&event);
-  //lRecTree->SetBranchAddress("HGCSSRecoHitVec",&rechitvec);
-  //if (lRecTree->GetBranch("nPuVtx")) lRecTree->SetBranchAddress("nPuVtx",&nPuVtx);
+
 
   lSimTree->SetBranchAddress("HGCSSEvent",&event);
   lSimTree->SetBranchAddress("HGCSSSamplingSectionVec",&ssvec);
@@ -393,20 +362,38 @@ int main(int argc, char** argv){//main
       continue;
     }
 
-    //lRecTree->GetEntry(ievt);
-    //miphitvec.clear();
-
-    if(debug) std::cout<<" gen vec size is "<<(*genvec).size()<<std::endl;
+    double ptgen=-1.;
+    double Egen=-1.;
+    double ptgenpx=-1.;
+    double ptgenpy=-1.;
+    double ptgenpz=-1.;
+    int pidgen=-1;
+    if((*genvec).size()>0) {
+      pidgen=(*genvec)[0].pdgid();
+      ptgenpx=(*genvec)[0].px();
+      ptgenpx=(*genvec)[0].py();
+      ptgenpz=(*genvec)[0].pz();
+      ptgen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy);
+      Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
+    }
+    if(debug) {
+      std::cout<<" gen vec size is "<<(*genvec).size()<<std::endl;
+      std::cout<<" first gen "<<ptgen<<" "<<Egen<<" "<<pidgen<<std::endl;
+      for (unsigned iP(0); iP<(*genvec).size(); ++iP){
+        std::cout<<" gen particle "<<iP<<" is "<<(*genvec)[iP].pdgid()<<std::endl;
+      }
+    }
 
 
     bool isScint = false;
     if (debug) std::cout << " - Event contains " << (*rechitvec).size() << " rechits." << std::endl;
     unsigned notInEtaRange = 0;
     unsigned notInLayerRange = 0;
+    double rechitsumE=0.;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
 	HGCSSRecoHit lHit = (*rechitvec)[iH];
 	double leta = lHit.eta();
-	if (debug>1) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
+	if (debug>20) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
 	//clean up rechit collection
 	if (fabs(leta-etamean)>= deta){
 	  rechitvec->erase(rechitvec->begin()+iH);
@@ -434,9 +421,9 @@ int main(int argc, char** argv){//main
 	myHit.sety(lHit.get_y());
 	myHit.setz(lHit.get_z());
 	myHit.setLayer(lHit.layer());
-        //miphitvec.push_back(myHit);
 
 
+	rechitsumE+=lHit.energy();
 	h_energy->Fill(lHit.energy());
 	h_z->Fill(lHit.get_z());
 	h_z1->Fill(lHit.get_z());
@@ -449,7 +436,7 @@ int main(int argc, char** argv){//main
 	h_xy->Fill(lHit.get_x(),lHit.get_y());
 	int ilayer = ixx;
 
-	if(debug>4) {
+	if(debug>20) {
 	  if(isScint) std::cout<<"Will Robinson: found one "<<lHit.energy()<<" "<<lHit.layer()<<" "<<ilayer<<std::endl;
 	}
 
@@ -523,6 +510,11 @@ int main(int argc, char** argv){//main
 
 
       }//loop on hits
+    if(debug>1) {
+      std::cout<<" reco gen are "<<rechitsumE<<" "<<Egen<<std::endl;
+    }
+    h_Egenreco->Fill(Egen,rechitsumE/Egen);
+
 
       if (debug) std::cout << " - In eta range, event contains " << (*rechitvec).size() << " rechits." << std::endl;
 
