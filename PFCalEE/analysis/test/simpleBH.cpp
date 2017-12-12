@@ -57,9 +57,13 @@ int main(int argc, char** argv){//main
   //Input output and config options
   std::string cfg;
   unsigned pNevts;
-  std::string inFilePath;
+  //std::string inFilePath;
   std::string outFilePath;
+  std::string filePath;
+  std::string digifilePath;
   unsigned nRuns;
+  std::string simFileName;
+  std::string recoFileName;
   unsigned debug;
   double etamean;
   double deta;
@@ -72,8 +76,12 @@ int main(int argc, char** argv){//main
   config.add_options()
     //Input output and config options //->required()
     ("pNevts,n",       po::value<unsigned>(&pNevts)->default_value(0))
-    ("inFilePath,i",   po::value<std::string>(&inFilePath)->required())
+    //("inFilePath,i",   po::value<std::string>(&inFilePath)->required())
     ("outFilePath,o",  po::value<std::string>(&outFilePath)->required())
+    ("filePath,i",     po::value<std::string>(&filePath)->required())
+    ("digifilePath", po::value<std::string>(&digifilePath)->default_value(""))
+    ("simFileName,s",  po::value<std::string>(&simFileName)->required())
+    ("recoFileName,r", po::value<std::string>(&recoFileName)->required())
     ("nRuns",        po::value<unsigned>(&nRuns)->default_value(0))
     ("debug,d",        po::value<unsigned>(&debug)->default_value(0))
     ("etamean,e",      po::value<double>(&etamean)->default_value(2.8))
@@ -83,9 +91,14 @@ int main(int argc, char** argv){//main
   po::store(po::parse_config_file<char>(cfg.c_str(), config), vm);
   po::notify(vm);
 
+
+  std::string inFilePath = filePath+simFileName;
+
   std::cout << " -- Input parameters: " << std::endl
-	    << " -- Input file path: " << inFilePath << std::endl
-	    << " -- Output file path: " << outFilePath << std::endl
+            << " -- Input file path: " << filePath << std::endl
+            << " -- Digi Input file path: " << digifilePath << std::endl
+    //	    << " -- Input file path: " << inFilePath << std::endl
+    	    << " -- Output file path: " << outFilePath << std::endl
 	    << " -- mean eta: " << etamean 
 	    << std::endl
 	    << " -- Processing ";
@@ -113,6 +126,75 @@ int main(int argc, char** argv){//main
   /////////////////////////////////////////////////////////////
   //input
   /////////////////////////////////////////////////////////////
+
+
+  std::ostringstream inputsim;
+  inputsim << filePath << "/" << simFileName;
+  std::ostringstream inputrec;
+  if (digifilePath.size()==0)
+    inputrec << filePath << "/" << recoFileName;
+  else
+    inputrec << digifilePath << "/" << recoFileName;
+
+  std::cout << inputsim.str() << " " << inputrec.str() << std::endl;
+
+  HGCSSInfo * info;
+
+  TChain *lSimTree = new TChain("HGCSSTree");
+  TChain *lRecTree = 0;
+
+  TFile * simFile = 0;
+  TFile * recFile = 0;
+
+  if (recoFileName.find("Digi") != recoFileName.npos)
+    lRecTree = new TChain("RecoTree");
+  else lRecTree = new TChain("PUTree");
+
+  if (nRuns == 0){
+    if (!testInputFile(inputsim.str(),simFile)) return 1;
+    lSimTree->AddFile(inputsim.str().c_str());
+    if (simFile) info =(HGCSSInfo*)simFile->Get("Info");
+    else {
+      std::cout << " -- Error in getting information from simfile!" << std::endl;
+      return 1;
+    }
+    if (!testInputFile(inputrec.str(),recFile)) return 1;
+    lRecTree->AddFile(inputrec.str().c_str());
+  }
+  else {
+    for (unsigned i(0);i<nRuns;++i){
+      std::ostringstream lstrsim;
+      std::ostringstream lstrrec;
+      lstrsim << inputsim.str() << "_run" << i << ".root";
+      if (testInputFile(lstrsim.str(),simFile)){
+        if (simFile) info =(HGCSSInfo*)simFile->Get("Info");
+        else {
+	  std::cout << " -- Error in getting information from simfile!" << std::endl;
+          return 1;
+        }
+      }
+      else continue;
+      lstrrec << inputrec.str() << "_run" << i << ".root";
+      if (!testInputFile(lstrrec.str(),recFile)) continue;
+      lSimTree->AddFile(lstrsim.str().c_str());
+      lRecTree->AddFile(lstrrec.str().c_str());
+    }
+  }
+
+  if (!lSimTree){
+    std::cout << " -- Error, tree HGCSSTree cannot be opened. Exiting..." << std::endl;
+    return 1;
+  }
+
+  if (!lRecTree){
+    std::cout << " -- Error, tree RecoTree cannot be opened. Exiting..." << std::endl;
+    return 1;
+  }
+
+
+
+  /*
+
   TChain *lTree = new TChain("RecoTree");
   TFile * recFile = 0;
   if (nRuns == 0){
@@ -133,11 +215,11 @@ int main(int argc, char** argv){//main
   }
 
   std::cout << " Trees added." << std::endl;
+  */
 
+  //HGCSSInfo * info=(HGCSSInfo*)recFile->Get("Info");
 
-  HGCSSInfo * info=(HGCSSInfo*)recFile->Get("Info");
-
-  assert(info);
+  //assert(info);
 
   const unsigned versionNumber = info->version();
   const unsigned model = info->model();
@@ -211,8 +293,13 @@ int main(int argc, char** argv){//main
   //miptree->Branch(label.str().c_str(),"std::vector<HGCSSSimpleHit>",&miphitvec);
 
   TH1F* h_energy = new TH1F("h_energy","hit energy",1000,0.,5.);
-  TH1F* h_z = new TH1F("h_z","z of hit",1000,3000.,5200);
+  TH1F* h_z = new TH1F("h_z","z of hit",5000,3100.,5200);
+  TH1F* h_z1 = new TH1F("h_z1","z of hit",5000,3150.,3550);
+  TH1F* h_z2 = new TH1F("h_z2","z of hit",5000,3550.,5200);
   TH2F* h_xy = new TH2F("h_xy","xy of hit",1000,-1200,1200,1000,-1200,1200);
+  TH1F* h_l = new TH1F("h_l","layer of hit",80,0.,80.);
+  TH1F* h_l2 = new TH1F("h_l2","layer of hit",30,50,80.);
+  TH2F* h_zl = new TH2F("h_zl","z vs l of hit",5000,4300.,5200,25,30.,55.);
 
   TH2F* h_nsxy36 = new TH2F("h_nsxy36","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
   TH2F* h_nsxy37 = new TH2F("h_nsxy37","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
@@ -254,26 +341,62 @@ int main(int argc, char** argv){//main
   //////////////////////////////////////////////////////
 
 
-  const unsigned nEvts = ((pNevts > lTree->GetEntries() || pNevts==0) ? static_cast<unsigned>(lTree->GetEntries()) : pNevts) ;
+  //  const unsigned nEvts = ((pNevts > lRecTree->GetEntries() || pNevts==0) ? static_cast<unsigned>(lRecTree->GetEntries()) : pNevts) ;
   
-  std::cout << " -- Processing " << nEvts << " events out of " << lTree->GetEntries() << std::endl;
+  //std::cout << " -- Processing " << nEvts << " events out of " << 
+  //   lRecTree->GetEntries()<< std::endl;
+
+
+  const unsigned nEvts = ((pNevts > lSimTree->GetEntries() || pNevts==0) ? static_cast<unsigned>(lSimTree->GetEntries()) : pNevts) ;
+
+  std::cout << " -- Processing " << nEvts << " events out of " << lSimTree->GetEntries() << " " << lRecTree->GetEntries() << std::endl;
 
 
   //loop on events
   HGCSSEvent * event = 0;
+  HGCSSEvent * eventRec = 0;
+  std::vector<HGCSSSamplingSection> * ssvec = 0;
+  std::vector<HGCSSSimHit> * simhitvec = 0;
   std::vector<HGCSSRecoHit> * rechitvec = 0;
+  std::vector<HGCSSGenParticle> * genvec = 0;
   unsigned nPuVtx = 0;
 
-  lTree->SetBranchAddress("HGCSSEvent",&event);
-  lTree->SetBranchAddress("HGCSSRecoHitVec",&rechitvec);
-  if (lTree->GetBranch("nPuVtx")) lTree->SetBranchAddress("nPuVtx",&nPuVtx);
+  //lRecTree->SetBranchAddress("HGCSSEvent",&event);
+  //lRecTree->SetBranchAddress("HGCSSRecoHitVec",&rechitvec);
+  //if (lRecTree->GetBranch("nPuVtx")) lRecTree->SetBranchAddress("nPuVtx",&nPuVtx);
 
+  lSimTree->SetBranchAddress("HGCSSEvent",&event);
+  lSimTree->SetBranchAddress("HGCSSSamplingSectionVec",&ssvec);
+  lSimTree->SetBranchAddress("HGCSSSimHitVec",&simhitvec);
+  lSimTree->SetBranchAddress("HGCSSGenParticleVec",&genvec);
+
+  lRecTree->SetBranchAddress("HGCSSEvent",&eventRec);
+  lRecTree->SetBranchAddress("HGCSSRecoHitVec",&rechitvec);
+  if (lRecTree->GetBranch("nPuVtx")) lRecTree->SetBranchAddress("nPuVtx",&nPuVtx);
+
+
+
+  unsigned ievtRec = 0;
+  unsigned nSkipped = 0;
   for (unsigned ievt(0); ievt<nEvts; ++ievt){//loop on entries
+    if (ievtRec>=lRecTree->GetEntries()) continue;
+
     if (debug) std::cout << "... Processing entry: " << ievt << std::endl;
     else if (ievt%50 == 0) std::cout << "... Processing entry: " << ievt << std::endl;
-    lTree->GetEntry(ievt);
 
+
+    lSimTree->GetEntry(ievt);
+    lRecTree->GetEntry(ievtRec);
+    if (nPuVtx>0 && eventRec->eventNumber()==0 && event->eventNumber()!=0) {
+      std::cout << " skip !" << ievt << " " << ievtRec << std::endl;
+      nSkipped++;
+      continue;
+    }
+
+    //lRecTree->GetEntry(ievt);
     //miphitvec.clear();
+
+    if(debug) std::cout<<" gen vec size is "<<(*genvec).size()<<std::endl;
 
 
     bool isScint = false;
@@ -313,14 +436,22 @@ int main(int argc, char** argv){//main
 	myHit.setLayer(lHit.layer());
         //miphitvec.push_back(myHit);
 
-	if(debug>4) {
-	  if(isScint) std::cout<<"Will Robinson: found one "<<lHit.energy()<<" "<<lHit.layer()<<std::endl;
-	}
 
 	h_energy->Fill(lHit.energy());
 	h_z->Fill(lHit.get_z());
+	h_z1->Fill(lHit.get_z());
+	h_z2->Fill(lHit.get_z());
+	h_l->Fill(lHit.layer()+0.5);
+	int ixx=lHit.layer();
+	if(ixx>52) ixx=ixx-17;
+	h_zl->Fill(lHit.get_z(),ixx);
+	h_l2->Fill(lHit.layer()+0.5);
 	h_xy->Fill(lHit.get_x(),lHit.get_y());
-	int ilayer = lHit.layer();
+	int ilayer = ixx;
+
+	if(debug>4) {
+	  if(isScint) std::cout<<"Will Robinson: found one "<<lHit.energy()<<" "<<lHit.layer()<<" "<<ilayer<<std::endl;
+	}
 
 
 
