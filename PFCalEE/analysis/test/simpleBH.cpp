@@ -370,9 +370,9 @@ int main(int argc, char** argv){//main
     int pidgen=-1;
     if((*genvec).size()>0) {
       pidgen=(*genvec)[0].pdgid();
-      ptgenpx=(*genvec)[0].px();
-      ptgenpx=(*genvec)[0].py();
-      ptgenpz=(*genvec)[0].pz();
+      ptgenpx=(*genvec)[0].px()/1000.;
+      ptgenpy=(*genvec)[0].py()/1000.;
+      ptgenpz=(*genvec)[0].pz()/1000.;
       ptgen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy);
       Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
     }
