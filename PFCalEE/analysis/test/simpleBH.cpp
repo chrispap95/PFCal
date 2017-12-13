@@ -305,7 +305,7 @@ int main(int argc, char** argv){//main
   TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,1.1);
-  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,1.1);
+  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,4.);
 
   
   ///////////////////////////////////////////////////////
