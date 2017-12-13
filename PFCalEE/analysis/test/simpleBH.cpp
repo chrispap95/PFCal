@@ -368,6 +368,7 @@ int main(int argc, char** argv){//main
     double ptgenpx=-1.;
     double ptgenpy=-1.;
     double ptgenpz=-1.;
+    double etagen=99999.;
     int pidgen=-1;
     if((*genvec).size()>0) {
       pidgen=(*genvec)[0].pdgid();
@@ -375,11 +376,13 @@ int main(int argc, char** argv){//main
       ptgenpy=(*genvec)[0].py()/1000.;
       ptgenpz=(*genvec)[0].pz()/1000.;
       ptgen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy);
+      double theta=atan(ptgen/ptgenpz);
+      etagen=-log(tan(theta/2));
       Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
     }
     if(debug) {
       std::cout<<" gen vec size is "<<(*genvec).size()<<std::endl;
-      std::cout<<" first gen "<<ptgen<<" "<<Egen<<" "<<pidgen<<std::endl;
+      std::cout<<" first gen "<<ptgen<<" "<<Egen<<" "<<pidgen<<" "<<etagen<<std::endl;
       for (unsigned iP(0); iP<(*genvec).size(); ++iP){
         std::cout<<" gen particle "<<iP<<" is "<<(*genvec)[iP].pdgid()<<std::endl;
       }
