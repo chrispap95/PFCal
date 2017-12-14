@@ -51,6 +51,16 @@
 using boost::lexical_cast;
 namespace po=boost::program_options;
 
+double DeltaR(double eta1,double phi1,double eta2,double phi2){
+  double dr=99999.;
+  double deta=fabs(eta1-eta2);
+  double dphi=fabs(phi1-phi2);
+  if(dphi>TMath::Pi()) dphi=2.*TMath::Pi()-dphi;
+  dr=sqrt(deta*deta+dphi*dphi);
+  return dr;
+}
+
+
 int main(int argc, char** argv){//main  
 
 
@@ -65,8 +75,8 @@ int main(int argc, char** argv){//main
   std::string simFileName;
   std::string recoFileName;
   unsigned debug;
-  double etamean;
-  double deta;
+  //double etamean;
+  //double deta;
   po::options_description preconfig("Configuration"); 
   preconfig.add_options()("cfg,c",po::value<std::string>(&cfg)->required());
   po::variables_map vm;
@@ -83,8 +93,8 @@ int main(int argc, char** argv){//main
     ("recoFileName,r", po::value<std::string>(&recoFileName)->required())
     ("nRuns",        po::value<unsigned>(&nRuns)->default_value(0))
     ("debug,d",        po::value<unsigned>(&debug)->default_value(0))
-    ("etamean,e",      po::value<double>(&etamean)->default_value(2.8))
-    ("deta",      po::value<double>(&deta)->default_value(0.05))
+    //("etamean,e",      po::value<double>(&etamean)->default_value(2.8))
+    //("deta",      po::value<double>(&deta)->default_value(0.05))
     ;
   po::store(po::command_line_parser(argc, argv).options(config).allow_unregistered().run(), vm);
   po::store(po::parse_config_file<char>(cfg.c_str(), config), vm);
@@ -97,7 +107,7 @@ int main(int argc, char** argv){//main
             << " -- Input file path: " << filePath << std::endl
             << " -- Digi Input file path: " << digifilePath << std::endl
     	    << " -- Output file path: " << outFilePath << std::endl
-	    << " -- mean eta: " << etamean 
+    //	    << " -- mean eta: " << etamean 
 	    << std::endl
 	    << " -- Processing ";
   if (pNevts == 0) std::cout << "all events." << std::endl;
@@ -209,7 +219,8 @@ int main(int argc, char** argv){//main
   myDetector.buildDetector(versionNumber,true,false,bypassR);
 
   //corrected for Si-Scint overlap
-  const unsigned nLayers = 52;//etamean<2.3? myDetector.nLayers(): 52;
+  const unsigned nLayers = 52;//
+
 
   std::cout << " -- Calor size XY = " << calorSizeXY
 	    << ", version number = " << versionNumber 
@@ -265,7 +276,9 @@ int main(int argc, char** argv){//main
   TH1F* h_z = new TH1F("h_z","z of hit",5000,3100.,5200);
   TH1F* h_z1 = new TH1F("h_z1","z of hit",5000,3150.,3550);
   TH1F* h_z2 = new TH1F("h_z2","z of hit",5000,3550.,5200);
-  TH2F* h_xy = new TH2F("h_xy","xy of hit",1000,-1200,1200,1000,-1200,1200);
+  TH2F* h_xy = new TH2F("h_xy","xy of hit",1000,-2000,2000,1000,-2000,2000);
+  TH2F* h_etaphi = new TH2F("h_etaphi","etaphi of hit",1000,1,3.5,1000,-7,7);
+  TH2F* h_getaphi = new TH2F("h_getaphi","gen part etaphi of hit",1000,1,3.5,1000,-7,7);
   TH1F* h_l = new TH1F("h_l","layer of hit",80,0.,80.);
   TH1F* h_l2 = new TH1F("h_l2","layer of hit",30,50,80.);
   TH2F* h_zl = new TH2F("h_zl","z vs l of hit",5000,4300.,5200,25,30.,55.);
@@ -307,6 +320,8 @@ int main(int argc, char** argv){//main
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,1.1);
   TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,4.);
 
+
+  TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,5.);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -369,6 +384,7 @@ int main(int argc, char** argv){//main
     double ptgenpy=-1.;
     double ptgenpz=-1.;
     double etagen=99999.;
+    double phigen=99999.;
     int pidgen=-1;
     if((*genvec).size()>0) {
       pidgen=(*genvec)[0].pdgid();
@@ -379,10 +395,13 @@ int main(int argc, char** argv){//main
       double theta=atan(ptgen/ptgenpz);
       etagen=-log(tan(theta/2));
       Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
+      phigen=atan2(ptgenpy,ptgenpx);
+      if(phigen<0) phigen=2.*TMath::Pi()+phigen;
     }
+    h_getaphi->Fill(etagen,phigen);
     if(debug) {
       std::cout<<" gen vec size is "<<(*genvec).size()<<std::endl;
-      std::cout<<" first gen "<<ptgen<<" "<<Egen<<" "<<pidgen<<" "<<etagen<<std::endl;
+      std::cout<<" first gen "<<ptgen<<" "<<Egen<<" "<<pidgen<<" "<<etagen<<" "<<phigen<<std::endl;
       for (unsigned iP(0); iP<(*genvec).size(); ++iP){
         std::cout<<" gen particle "<<iP<<" is "<<(*genvec)[iP].pdgid()<<std::endl;
       }
@@ -391,135 +410,153 @@ int main(int argc, char** argv){//main
 
     bool isScint = false;
     if (debug) std::cout << " - Event contains " << (*rechitvec).size() << " rechits." << std::endl;
-    unsigned notInEtaRange = 0;
-    unsigned notInLayerRange = 0;
-    double rechitsumE=0.;
+
+    // make some simple plots about all the rechits
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
-	HGCSSRecoHit lHit = (*rechitvec)[iH];
-	double leta = lHit.eta();
-	if (debug>20) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
+      HGCSSRecoHit lHit = (*rechitvec)[iH];
+      double leta = lHit.eta();
+      unsigned layer = lHit.layer();
+      if (debug>20) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
+
+      const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
+      isScint = subdet.isScint;
+      TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap() : shape==2?geomConv.diamondMap() : shape==3? geomConv.triangleMap(): geomConv.hexagonMap();
+
+      unsigned cellid = map->FindBin(lHit.get_x(),lHit.get_y());
+      geomConv.fill(lHit.layer(),lHit.energy(),0,cellid,lHit.get_z());
+
+
+      h_energy->Fill(lHit.energy());
+      h_z->Fill(lHit.get_z());
+      h_z1->Fill(lHit.get_z());
+      h_z2->Fill(lHit.get_z());
+      h_l->Fill(lHit.layer()+0.5);
+      int ixx=lHit.layer();
+      if(ixx>52) ixx=ixx-17;
+      h_zl->Fill(lHit.get_z(),ixx);
+      h_l2->Fill(lHit.layer()+0.5);
+      h_xy->Fill(lHit.get_x(),lHit.get_y());
+      h_etaphi->Fill(lHit.eta(),lHit.phi());
+      int ilayer = ixx;
+
+      if(ilayer==36) {
+	if(isScint) h_sxy36->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy36->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==37) {
+	if(isScint) h_sxy37->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy37->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==38) {
+	if(isScint) h_sxy38->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy38->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==39) {
+	if(isScint) h_sxy39->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy39->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==40) {
+	if(isScint) h_sxy40->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy40->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==41) {
+	if(isScint) h_sxy41->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy41->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==42) {
+	if(isScint) h_sxy42->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy42->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==43) {
+	if(isScint) h_sxy43->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy43->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==44) {
+	if(isScint) h_sxy44->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy44->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==45) {
+	if(isScint) h_sxy45->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy45->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==46) {
+	if(isScint) h_sxy46->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy46->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==47) {
+	if(isScint) h_sxy47->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy47->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==48) {
+	if(isScint) h_sxy48->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy48->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==49) {
+	if(isScint) h_sxy49->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy49->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==50) {
+	if(isScint) h_sxy50->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy50->Fill(lHit.get_x(),lHit.get_y());
+      };
+      if(ilayer==51) {
+	if(isScint) h_sxy51->Fill(lHit.get_x(),lHit.get_y());
+	else h_nsxy51->Fill(lHit.get_x(),lHit.get_y());
+      };
+
+
+    }//loop on hits
+
+
+
+    // make e/p plots for various cones around gen particle
+    double rechitsumE01=0.;
+    double rechitsumE02=0.;
+    double rechitsumE03=0.;
+    double rechitsumE04=0.;
+    double rechitsumE05=0.;
+    double etaW=0.;
+    double phiW=0.;
+    double norm=0.;
+    for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
+      HGCSSRecoHit lHit = (*rechitvec)[iH];
+      unsigned layer = lHit.layer();
+      double leta = lHit.eta();
+      double lphi = lHit.phi();
+      if(lphi<0) lphi=2.*TMath::Pi()+lphi;
+      double lenergy=lHit.energy();
+      if (debug>20) std::cout << " -- hit " << iH << " et eta phi " << lenergy<<" "<<leta << " "<< lphi<<std::endl; 
 	//clean up rechit collection
-	if (fabs(leta-etamean)>= deta){
-	  rechitvec->erase(rechitvec->begin()+iH);
-	  --iH;
-	  notInEtaRange++;
-	  continue;
-	}
-	unsigned layer = lHit.layer();
-	if (layer>=myDetector.nLayers()) {
-	  rechitvec->erase(rechitvec->begin()+iH);
-	  --iH;
-	  notInLayerRange++;
-	  continue;
-	}
-	const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
-	isScint = subdet.isScint;
-	TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap() : shape==2?geomConv.diamondMap() : shape==3? geomConv.triangleMap(): geomConv.hexagonMap();
 
-	unsigned cellid = map->FindBin(lHit.get_x(),lHit.get_y());
-	geomConv.fill(lHit.layer(),lHit.energy(),0,cellid,lHit.get_z());
+      const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
+      isScint = subdet.isScint;
 
-	HGCSSSimpleHit myHit;
-	myHit.setE(lHit.energy());
-	myHit.setx(lHit.get_x());
-	myHit.sety(lHit.get_y());
-	myHit.setz(lHit.get_z());
-	myHit.setLayer(lHit.layer());
+      norm+=lenergy;
+      etaW+=leta*lenergy;
+      phiW+=lphi*lenergy;
 
+      //double dR=DeltaR(etagen,phigen,leta,lphi);
+      double dR=fabs(etagen-phigen);
+      if(debug>20) std::cout<<" dR "<<dR<<" "<<etagen<<" "<<phigen<<" "<<leta<<" "<<lphi<<std::endl;
+      if(dR<0.1)  rechitsumE01+=lenergy;
+      if(dR<0.2)  rechitsumE02+=lenergy;      
+      if(dR<0.3)  rechitsumE03+=lenergy;
+      if(dR<0.4)  rechitsumE04+=lenergy;
+      if(dR<0.5)  rechitsumE05+=lenergy;
 
-	rechitsumE+=lHit.energy();
-	h_energy->Fill(lHit.energy());
-	h_z->Fill(lHit.get_z());
-	h_z1->Fill(lHit.get_z());
-	h_z2->Fill(lHit.get_z());
-	h_l->Fill(lHit.layer()+0.5);
-	int ixx=lHit.layer();
-	if(ixx>52) ixx=ixx-17;
-	h_zl->Fill(lHit.get_z(),ixx);
-	h_l2->Fill(lHit.layer()+0.5);
-	h_xy->Fill(lHit.get_x(),lHit.get_y());
-	int ilayer = ixx;
-
-	if(debug>20) {
-	  if(isScint) std::cout<<"Will Robinson: found one "<<lHit.energy()<<" "<<lHit.layer()<<" "<<ilayer<<std::endl;
-	}
-
-
-
-	if(ilayer==36) {
-	  if(isScint) h_sxy36->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy36->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==37) {
-	  if(isScint) h_sxy37->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy37->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==38) {
-	  if(isScint) h_sxy38->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy38->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==39) {
-	  if(isScint) h_sxy39->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy39->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==40) {
-	  if(isScint) h_sxy40->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy40->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==41) {
-	  if(isScint) h_sxy41->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy41->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==42) {
-	  if(isScint) h_sxy42->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy42->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==43) {
-	  if(isScint) h_sxy43->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy43->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==44) {
-	  if(isScint) h_sxy44->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy44->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==45) {
-	  if(isScint) h_sxy45->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy45->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==46) {
-	  if(isScint) h_sxy46->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy46->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==47) {
-	  if(isScint) h_sxy47->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy47->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==48) {
-	  if(isScint) h_sxy48->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy48->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==49) {
-	  if(isScint) h_sxy49->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy49->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==50) {
-	  if(isScint) h_sxy50->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy50->Fill(lHit.get_x(),lHit.get_y());
-	};
-	if(ilayer==51) {
-	  if(isScint) h_sxy51->Fill(lHit.get_x(),lHit.get_y());
-	  else h_nsxy51->Fill(lHit.get_x(),lHit.get_y());
-	};
-
-
-
-      }//loop on hits
+    }//loop on hits
     if(debug>1) {
-      std::cout<<" reco gen are "<<rechitsumE<<" "<<Egen<<std::endl;
+      std::cout<<" reco gen are "<<rechitsumE05<<" "<<Egen<<std::endl;
     }
-    h_Egenreco->Fill(Egen,rechitsumE/Egen);
-    h_egenreco->Fill(rechitsumE/Egen);
+    if(debug>5) std::cout<<"weighted eta phi are "<<etaW/norm<<" "<<phiW/norm<<std::endl;
 
+    h_Egenreco->Fill(Egen,rechitsumE05/Egen);
+    h_egenreco->Fill(rechitsumE05/Egen);
+    h_EpCone->Fill(0.1,rechitsumE01/Egen);
+    h_EpCone->Fill(0.2,rechitsumE02/Egen);
+    h_EpCone->Fill(0.3,rechitsumE03/Egen);
+    h_EpCone->Fill(0.4,rechitsumE04/Egen);
+    h_EpCone->Fill(0.5,rechitsumE05/Egen);
 
       if (debug) std::cout << " - In eta range, event contains " << (*rechitvec).size() << " rechits." << std::endl;
 
