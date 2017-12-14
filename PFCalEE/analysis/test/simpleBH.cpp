@@ -322,6 +322,9 @@ int main(int argc, char** argv){//main
 
 
   TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,5.);
+  TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,4.);
+  TH2F* h_etagenmax= new TH2F("h_etagenmax","eta gen vs max",100,1.,5.,100,1.,5.);
+  TH2F* h_phigenmax= new TH2F("h_phigenmax","eta gen vs max",100,-4,4.,100,-4.,4.);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -392,11 +395,13 @@ int main(int argc, char** argv){//main
       ptgenpy=(*genvec)[0].py()/1000.;
       ptgenpz=(*genvec)[0].pz()/1000.;
       ptgen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy);
-      double theta=atan(ptgen/ptgenpz);
-      etagen=-log(tan(theta/2));
+      //double theta=atan(ptgen/ptgenpz);
+      //etagen=-log(tan(theta/2));
+      etagen=(*genvec)[0].eta();
       Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
-      phigen=atan2(ptgenpy,ptgenpx);
-      if(phigen<0) phigen=2.*TMath::Pi()+phigen;
+      //phigen=atan2(ptgenpy,ptgenpx);
+      phigen=(*genvec)[0].phi();
+      //if(phigen<0) phigen=2.*TMath::Pi()+phigen;
     }
     h_getaphi->Fill(etagen,phigen);
     if(debug) {
@@ -412,10 +417,13 @@ int main(int argc, char** argv){//main
     if (debug) std::cout << " - Event contains " << (*rechitvec).size() << " rechits." << std::endl;
 
     // make some simple plots about all the rechits
+    unsigned iMax=-1;
+    double MaxE=-1.;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       double leta = lHit.eta();
       unsigned layer = lHit.layer();
+      if(lHit.energy()>MaxE) {MaxE=lHit.energy(); iMax=iH;}
       if (debug>20) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
 
       const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
@@ -507,7 +515,14 @@ int main(int argc, char** argv){//main
 
     }//loop on hits
 
-
+    HGCSSRecoHit lHit = (*rechitvec)[iMax];
+    double maxeta = lHit.eta();
+    double maxphi=lHit.phi();
+    h_etagenmax->Fill(maxeta,etagen);
+    h_phigenmax->Fill(maxphi,phigen);
+    if(debug>2) {
+      std::cout<<" Max hit energy eta phi "<<lHit.energy()<<" "<<lHit.eta()<<" "<<lHit.phi()<<std::endl;
+    }
 
     // make e/p plots for various cones around gen particle
     double rechitsumE01=0.;
@@ -523,7 +538,7 @@ int main(int argc, char** argv){//main
       unsigned layer = lHit.layer();
       double leta = lHit.eta();
       double lphi = lHit.phi();
-      if(lphi<0) lphi=2.*TMath::Pi()+lphi;
+      //if(lphi<0) lphi=2.*TMath::Pi()+lphi;
       double lenergy=lHit.energy();
       if (debug>20) std::cout << " -- hit " << iH << " et eta phi " << lenergy<<" "<<leta << " "<< lphi<<std::endl; 
 	//clean up rechit collection
@@ -535,8 +550,8 @@ int main(int argc, char** argv){//main
       etaW+=leta*lenergy;
       phiW+=lphi*lenergy;
 
-      //double dR=DeltaR(etagen,phigen,leta,lphi);
-      double dR=fabs(etagen-phigen);
+      double dR=DeltaR(etagen,phigen,leta,lphi);
+      //double dR=fabs(etagen-leta);
       if(debug>20) std::cout<<" dR "<<dR<<" "<<etagen<<" "<<phigen<<" "<<leta<<" "<<lphi<<std::endl;
       if(dR<0.1)  rechitsumE01+=lenergy;
       if(dR<0.2)  rechitsumE02+=lenergy;      
@@ -552,6 +567,7 @@ int main(int argc, char** argv){//main
 
     h_Egenreco->Fill(Egen,rechitsumE05/Egen);
     h_egenreco->Fill(rechitsumE05/Egen);
+    h_EpPhi->Fill(phigen,rechitsumE02/Egen);
     h_EpCone->Fill(0.1,rechitsumE01/Egen);
     h_EpCone->Fill(0.2,rechitsumE02/Egen);
     h_EpCone->Fill(0.3,rechitsumE03/Egen);
