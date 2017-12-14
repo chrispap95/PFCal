@@ -317,19 +317,19 @@ int main(int argc, char** argv){//main
   TH2F* h_sxy50 = new TH2F("h_sxy50","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
   TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
-  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,10.);
-  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,10.);
+  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,20.);
+  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,20.);
 
 
-  TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,10.);
-  TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,10.);
+  TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,20.);
+  TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,20.);
   TH2F* h_etagenmax= new TH2F("h_etagenmax","eta gen vs max",100,1.,5.,100,1.,5.);
   TH2F* h_phigenmax= new TH2F("h_phigenmax","phi gen vs max",100,-4,4.,100,-4.,4.);
+  TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,1000.);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
   //////////////////////////////////////////////////////
-
 
   //  const unsigned nEvts = ((pNevts > lRecTree->GetEntries() || pNevts==0) ? static_cast<unsigned>(lRecTree->GetEntries()) : pNevts) ;
   
@@ -369,7 +369,8 @@ int main(int argc, char** argv){//main
   for (unsigned ievt(0); ievt<nEvts; ++ievt){//loop on entries
     if (ievtRec>=lRecTree->GetEntries()) continue;
 
-    if (debug) std::cout << "... Processing entry: " << ievt << std::endl;
+
+    if (debug) std::cout << std::endl<<std::endl<<"... Processing entry: " << ievt << std::endl;
     else if (ievt%50 == 0) std::cout << "... Processing entry: " << ievt << std::endl;
 
 
@@ -518,6 +519,8 @@ int main(int argc, char** argv){//main
     HGCSSRecoHit lHit = (*rechitvec)[iMax];
     double maxeta = lHit.eta();
     double maxphi=lHit.phi();
+    double maxE=lHit.energy();
+    h_maxE->Fill(maxE);
     h_etagenmax->Fill(maxeta,etagen);
     h_phigenmax->Fill(maxphi,phigen);
     if(debug>2) {
@@ -565,7 +568,7 @@ int main(int argc, char** argv){//main
 
     }//loop on hits
     if(debug>1) {
-      std::cout<<" reco gen are "<<rechitsumE05<<" "<<Egen<<std::endl;
+      std::cout<<" reco gen are "<<rechitsumE01<<" "<<rechitsumE02<<" "<<rechitsumE03<<" "<<rechitsumE04<<" "<<rechitsumE05<<" "<<Egen<<std::endl;
     }
     if(debug>5) std::cout<<"weighted eta phi are "<<etaW/norm<<" "<<phiW/norm<<std::endl;
 
@@ -577,9 +580,6 @@ int main(int argc, char** argv){//main
     h_EpCone->Fill(0.3,rechitsumE03/Egen);
     h_EpCone->Fill(0.4,rechitsumE04/Egen);
     h_EpCone->Fill(0.5,rechitsumE05/Egen);
-
-      if (debug) std::cout << " - In eta range, event contains " << (*rechitvec).size() << " rechits." << std::endl;
-
     
       //miptree->Fill();
 
