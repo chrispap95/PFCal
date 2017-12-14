@@ -317,14 +317,14 @@ int main(int argc, char** argv){//main
   TH2F* h_sxy50 = new TH2F("h_sxy50","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
   TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
-  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,1.1);
-  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,4.);
+  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,10.);
+  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,10.);
 
 
-  TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,5.);
-  TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,4.);
+  TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,10.);
+  TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,10.);
   TH2F* h_etagenmax= new TH2F("h_etagenmax","eta gen vs max",100,1.,5.,100,1.,5.);
-  TH2F* h_phigenmax= new TH2F("h_phigenmax","eta gen vs max",100,-4,4.,100,-4.,4.);
+  TH2F* h_phigenmax= new TH2F("h_phigenmax","phi gen vs max",100,-4,4.,100,-4.,4.);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -533,6 +533,10 @@ int main(int argc, char** argv){//main
     double etaW=0.;
     double phiW=0.;
     double norm=0.;
+    //    double etaaxis=etagen;
+    //    double phiaxis=phigen;
+    double etaaxis=maxeta;
+    double phiaxis=maxphi;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       unsigned layer = lHit.layer();
@@ -550,7 +554,7 @@ int main(int argc, char** argv){//main
       etaW+=leta*lenergy;
       phiW+=lphi*lenergy;
 
-      double dR=DeltaR(etagen,phigen,leta,lphi);
+      double dR=DeltaR(etaaxis,phiaxis,leta,lphi);
       //double dR=fabs(etagen-leta);
       if(debug>20) std::cout<<" dR "<<dR<<" "<<etagen<<" "<<phigen<<" "<<leta<<" "<<lphi<<std::endl;
       if(dR<0.1)  rechitsumE01+=lenergy;
