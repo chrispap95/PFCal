@@ -317,7 +317,7 @@ int main(int argc, char** argv){//main
   TH2F* h_sxy50 = new TH2F("h_sxy50","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
   TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
-  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",100,0.,50.,100,0.,20.);
+  TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
   TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,20.);
 
 
@@ -326,7 +326,7 @@ int main(int argc, char** argv){//main
   TH2F* h_etagenmax= new TH2F("h_etagenmax","eta gen vs max",100,1.,5.,100,1.,5.);
   TH2F* h_phigenmax= new TH2F("h_phigenmax","phi gen vs max",100,-4,4.,100,-4.,4.);
   TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,5000.);
-  TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,5000.);
+  TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,50000.);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
