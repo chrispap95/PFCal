@@ -318,15 +318,15 @@ int main(int argc, char** argv){//main
   TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
 
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
-  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,10.);
+  TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,2.);
 
 
-  TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,10.);
-  TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,10.);
+  TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,2.);
+  TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,2.);
   TH2F* h_etagenmax= new TH2F("h_etagenmax","eta gen vs max",100,1.,5.,100,1.,5.);
   TH2F* h_phigenmax= new TH2F("h_phigenmax","phi gen vs max",100,-4,4.,100,-4.,4.);
-  TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,500.);
-  TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,5000.);
+  TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,1000.);
+  TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,500.);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -398,7 +398,8 @@ int main(int argc, char** argv){//main
       std::cout << " -- AbsWeight size: " << absW.size() << std::endl;
     }
 
-
+    //
+    // information about generator level particles
 
     double ptgen=-1.;
     double Egen=-1.;
@@ -435,7 +436,8 @@ int main(int argc, char** argv){//main
     bool isScint = false;
     if (debug) std::cout << " - Event contains " << (*rechitvec).size() << " rechits." << std::endl;
 
-    // make some simple plots about all the rechits
+    // make some simple plots about all the raw rechits, without the weights
+    // guessing rec hits are in MeV?
     unsigned iMax=-1;
     double MaxE=-1.;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
@@ -545,7 +547,9 @@ int main(int argc, char** argv){//main
       std::cout<<" Max hit energy eta phi "<<lHit.energy()<<" "<<lHit.eta()<<" "<<lHit.phi()<<std::endl;
     }
 
-    // make e/p plots for various cones around gen particle
+    // make e/p plots for various cones around gen particle, using weights this time
+    // for now, scale up by 10.  don't know why.  asking Anne-Marie
+    // also change to GeV for this section
     double rechitsumE01=0.;
     double rechitsumE02=0.;
     double rechitsumE03=0.;
@@ -564,7 +568,7 @@ int main(int argc, char** argv){//main
       double leta = lHit.eta();
       double lphi = lHit.phi();
       //if(lphi<0) lphi=2.*TMath::Pi()+lphi;
-      double lenergy=lHit.energy()*absW[layer]/1000.;
+      double lenergy=lHit.energy()*absW[layer]/100.;
       if (debug>20) std::cout << " -- hit " << iH << " et eta phi " << lenergy<<" "<<leta << " "<< lphi<<std::endl; 
 	//clean up rechit collection
 
