@@ -327,6 +327,8 @@ int main(int argc, char** argv){//main
   TH2F* h_phigenmax= new TH2F("h_phigenmax","phi gen vs max",100,-4,4.,100,-4.,4.);
   TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,1000.);
   TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,500.);
+
+  TH2F* h_ssvec = new TH2F("h_ssvec","ssvec versus layer number", 70,0.,70.,100,0.,100.);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -388,14 +390,28 @@ int main(int argc, char** argv){//main
 
 
     if(firstEvent) {
+      firstEvent=false;
       std::cout<<" size of ssvec of weights is "<<(*ssvec).size()<<std::endl;
       double absweight=0;      
       for (unsigned iL(0); iL<(*ssvec).size();++iL){
-	absweight+=(*ssvec)[iL].voldEdx()/(*ssvec)[1].voldEdx() ;
+	if(iL<((*ssvec).size()-1)) {
+	  unsigned next=iL+1;
+	  absweight=(((*ssvec)[iL].voldEdx())+((*ssvec)[next].voldEdx()))/2. ;
+	} else{
+	  absweight+=(*ssvec)[iL].voldEdx()  ;
+	}
 	absW.push_back(absweight);
 	absweight=0;
       }
       std::cout << " -- AbsWeight size: " << absW.size() << std::endl;
+      std::cout<<" values are ";
+      for (unsigned iL(0); iL<(*ssvec).size();++iL){
+	std::cout<<" "<<absW[iL];
+      }
+      std::cout<<std::endl;
+    }
+    for (unsigned iL(0); iL<(*ssvec).size();++iL){
+      h_ssvec->Fill(iL,absW[iL]);
     }
 
     //
@@ -568,7 +584,7 @@ int main(int argc, char** argv){//main
       double leta = lHit.eta();
       double lphi = lHit.phi();
       //if(lphi<0) lphi=2.*TMath::Pi()+lphi;
-      double lenergy=lHit.energy()*absW[layer]/100.;
+      double lenergy=lHit.energy()*absW[layer]/1000.;
       if (debug>20) std::cout << " -- hit " << iH << " et eta phi " << lenergy<<" "<<leta << " "<< lphi<<std::endl; 
 	//clean up rechit collection
 
