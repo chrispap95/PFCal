@@ -440,7 +440,7 @@ int main(int argc, char** argv){//main
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       double xh=lHit.get_x();
       double yh=lHit.get_y();
-      double zh=lHit.get_y();
+      double zh=lHit.get_z();
       double rh=sqrt(xh*xh+yh*yh);
       double Eh=lHit.energy();
       double leta = lHit.eta();
