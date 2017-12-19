@@ -277,12 +277,12 @@ int main(int argc, char** argv){//main
     std::ostringstream label;
     label.str("");
     label<<"xy of hit scint "<<ii+36;
-    h_sxy[ii]=new TH2F(label.str().c_str(),"xy of hit scint",2000,-2000.,2000.,2000,-2000.,2000.);
+    h_sxy[ii]=new TH2F(label.str().c_str(),"xy of hit scint",2500,-2500.,2500.,2500,-2500.,2500.);
     std::ostringstream label2;
     label2.str("");
     label2<<"xy of hit not scint "<<ii+36;
     h_nsxy[ii]=new TH2F(label2.str().c_str(),"xy of hit not scint",
-        2000,-2000.,2000.,2000,-2000.,2000.);
+        2500,-2500.,2500.,2500,-2500.,2500.);
   }
 
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
