@@ -494,7 +494,7 @@ int main(int argc, char** argv){//main
 	  if(rh>rmaxs[ip]) {rmaxs[ip]=rh;}
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
 	} else {
-	  h_nsxy[ip]->Fill(xh,xh);
+	  h_nsxy[ip]->Fill(xh,yh);
 	  if(rh<rminns[ip]) {rminns[ip]=rh;}
 	  if(rh>rmaxns[ip]) {rmaxns[ip]=rh;}
 	}
