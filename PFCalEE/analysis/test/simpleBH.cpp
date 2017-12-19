@@ -67,7 +67,6 @@ int main(int argc, char** argv){//main
   //Input output and config options
   std::string cfg;
   unsigned pNevts;
-  //std::string inFilePath;
   std::string outFilePath;
   std::string filePath;
   std::string digifilePath;
@@ -75,8 +74,6 @@ int main(int argc, char** argv){//main
   std::string simFileName;
   std::string recoFileName;
   unsigned debug;
-  //double etamean;
-  //double deta;
   po::options_description preconfig("Configuration"); 
   preconfig.add_options()("cfg,c",po::value<std::string>(&cfg)->required());
   po::variables_map vm;
@@ -93,8 +90,6 @@ int main(int argc, char** argv){//main
     ("recoFileName,r", po::value<std::string>(&recoFileName)->required())
     ("nRuns",        po::value<unsigned>(&nRuns)->default_value(0))
     ("debug,d",        po::value<unsigned>(&debug)->default_value(0))
-    //("etamean,e",      po::value<double>(&etamean)->default_value(2.8))
-    //("deta",      po::value<double>(&deta)->default_value(0.05))
     ;
   po::store(po::command_line_parser(argc, argv).options(config).allow_unregistered().run(), vm);
   po::store(po::parse_config_file<char>(cfg.c_str(), config), vm);
@@ -107,7 +102,6 @@ int main(int argc, char** argv){//main
             << " -- Input file path: " << filePath << std::endl
             << " -- Digi Input file path: " << digifilePath << std::endl
     	    << " -- Output file path: " << outFilePath << std::endl
-    //	    << " -- mean eta: " << etamean 
 	    << std::endl
 	    << " -- Processing ";
   if (pNevts == 0) std::cout << "all events." << std::endl;
@@ -265,13 +259,6 @@ int main(int argc, char** argv){//main
   outputFile->cd();
 
 
-
-
-  std::ostringstream label;
-  //root doesn't like . in branch names.....
-  //label << "hits";
-  //miptree->Branch(label.str().c_str(),"std::vector<HGCSSSimpleHit>",&miphitvec);
-
   TH1F* h_energy = new TH1F("h_energy","hit energy",1000,0.,5.);
   TH1F* h_z = new TH1F("h_z","z of hit",5000,3100.,5200);
   TH1F* h_z1 = new TH1F("h_z1","z of hit",5000,3150.,3550);
@@ -283,39 +270,20 @@ int main(int argc, char** argv){//main
   TH1F* h_l2 = new TH1F("h_l2","layer of hit",30,50,80.);
   TH2F* h_zl = new TH2F("h_zl","z vs l of hit",5000,4300.,5200,25,30.,55.);
 
-  TH2F* h_nsxy36 = new TH2F("h_nsxy36","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy37 = new TH2F("h_nsxy37","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy38 = new TH2F("h_nsxy38","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy39 = new TH2F("h_nsxy39","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy40 = new TH2F("h_nsxy40","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy41 = new TH2F("h_nsxy41","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy42 = new TH2F("h_nsxy42","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy43 = new TH2F("h_nsxy43","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy44 = new TH2F("h_nsxy44","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy45 = new TH2F("h_nsxy45","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy46 = new TH2F("h_nsxy46","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy47 = new TH2F("h_nsxy47","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy48 = new TH2F("h_nsxy48","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy49 = new TH2F("h_nsxy49","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy50 = new TH2F("h_nsxy50","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_nsxy51 = new TH2F("h_nsxy51","xy of hit not scint",1000,-1200,1200,1000,-1200,1200);
 
-  TH2F* h_sxy36 = new TH2F("h_sxy36","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy37 = new TH2F("h_sxy37","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy38 = new TH2F("h_sxy38","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy39 = new TH2F("h_sxy39","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy40 = new TH2F("h_sxy40","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy41 = new TH2F("h_sxy41","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy42 = new TH2F("h_sxy42","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy43 = new TH2F("h_sxy43","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy44 = new TH2F("h_sxy44","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy45 = new TH2F("h_sxy45","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy46 = new TH2F("h_sxy46","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy47 = new TH2F("h_sxy47","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy48 = new TH2F("h_sxy48","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy49 = new TH2F("h_sxy49","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy50 = new TH2F("h_sxy50","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
-  TH2F* h_sxy51 = new TH2F("h_sxy51","xy of hit scint",1000,-1200,1200,1000,-1200,1200);
+  TH2F *h_sxy[16];
+  TH2F *h_nsxy[16];
+  for(unsigned ii(0);ii<16;ii++) {
+    std::ostringstream label;
+    label.str("");
+    label<<"xy of hit scint "<<ii+36;
+    h_sxy[ii]=new TH2F(label.str().c_str(),"xy of hit scint",2000,-2000.,2000.,2000,-2000.,2000.);
+    std::ostringstream label2;
+    label2.str("");
+    label2<<"xy of hit not scint "<<ii+36;
+    h_nsxy[ii]=new TH2F(label2.str().c_str(),"xy of hit not scint",
+        2000,-2000.,2000.,2000,-2000.,2000.);
+  }
 
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
   TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,2.);
@@ -329,6 +297,10 @@ int main(int argc, char** argv){//main
   TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,500.);
 
   TH2F* h_ssvec = new TH2F("h_ssvec","ssvec versus layer number", 70,0.,70.,100,0.,100.);
+  TH1F* h_cellid = new TH1F("h_cellid","cell is",25000,0.,250000.);
+  TH1F* h_cellids = new TH1F("h_cellids","scint cell is",25000,0.,5000000000.);
+  TH2F* h_cellidz = new TH2F("h_cellidz","cell is versus z",5000,3100,5200,1000,0.,250000.);
+
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -371,6 +343,15 @@ int main(int argc, char** argv){//main
   unsigned nSkipped = 0;
   std::vector<double> absW;
   bool firstEvent = true;
+  unsigned ibinScintmin=10000000000;
+  unsigned ibinScintmax=0;
+  
+  double rmaxs[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double rmins[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  double rmaxns[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double rminns[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  
+
   for (unsigned ievt(0); ievt<nEvts; ++ievt){//loop on entries
     if (ievtRec>=lRecTree->GetEntries()) continue;
 
@@ -453,104 +434,76 @@ int main(int argc, char** argv){//main
     if (debug) std::cout << " - Event contains " << (*rechitvec).size() << " rechits." << std::endl;
 
     // make some simple plots about all the raw rechits, without the weights
-    // guessing rec hits are in MeV?
     unsigned iMax=-1;
     double MaxE=-1.;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
+      double xh=lHit.get_x();
+      double yh=lHit.get_y();
+      double zh=lHit.get_y();
+      double rh=sqrt(xh*xh+yh*yh);
+      double Eh=lHit.energy();
       double leta = lHit.eta();
+      double lphi = lHit.phi();
       unsigned layer = lHit.layer();
-      if(lHit.energy()>MaxE) {MaxE=lHit.energy(); iMax=iH;}
-      if (debug>20) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
-
+      unsigned ixx=layer;
+      if(ixx>52) ixx=ixx-17;
+      int ip=ixx-36;
       const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
       isScint = subdet.isScint;
-      TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap() : shape==2?geomConv.diamondMap() : shape==3? geomConv.triangleMap(): geomConv.hexagonMap();
+      TH2Poly *map = 
+	isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1()
+                                                : geomConv.squareMap2())
+        : shape==4?geomConv.squareMap() 
+	: shape==2?geomConv.diamondMap() 
+	: shape==3? geomConv.triangleMap()
+	: geomConv.hexagonMap();
+      unsigned cellid = map->FindBin(xh,yh);
+      geomConv.fill(layer,Eh,0,cellid,zh);
 
-      unsigned cellid = map->FindBin(lHit.get_x(),lHit.get_y());
-      geomConv.fill(lHit.layer(),lHit.energy(),0,cellid,lHit.get_z());
+      if(Eh>MaxE) {MaxE=Eh; iMax=iH;}
+      if (debug>20) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
+
+      h_cellid->Fill(cellid);
+      if(isScint) {
+	if(cellid>ibinScintmax) ibinScintmax=cellid;
+	if(cellid<ibinScintmin) ibinScintmin=cellid;
+	h_cellids->Fill(cellid);
+      }
+      h_cellidz->Fill(zh,cellid);
 
 
-      h_energy->Fill(lHit.energy());
-      h_z->Fill(lHit.get_z());
-      h_z1->Fill(lHit.get_z());
-      h_z2->Fill(lHit.get_z());
-      h_l->Fill(lHit.layer()+0.5);
-      int ixx=lHit.layer();
-      if(ixx>52) ixx=ixx-17;
-      h_zl->Fill(lHit.get_z(),ixx);
-      h_l2->Fill(lHit.layer()+0.5);
-      h_xy->Fill(lHit.get_x(),lHit.get_y());
-      h_etaphi->Fill(lHit.eta(),lHit.phi());
-      int ilayer = ixx;
+      h_energy->Fill(Eh);
+      h_z->Fill(zh);
+      h_z1->Fill(zh);
+      h_z2->Fill(zh);
+      h_l->Fill(layer+0.5);
 
-      if(ilayer==36) {
-	if(isScint) h_sxy36->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy36->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==37) {
-	if(isScint) h_sxy37->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy37->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==38) {
-	if(isScint) h_sxy38->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy38->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==39) {
-	if(isScint) h_sxy39->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy39->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==40) {
-	if(isScint) h_sxy40->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy40->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==41) {
-	if(isScint) h_sxy41->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy41->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==42) {
-	if(isScint) h_sxy42->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy42->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==43) {
-	if(isScint) h_sxy43->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy43->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==44) {
-	if(isScint) h_sxy44->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy44->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==45) {
-	if(isScint) h_sxy45->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy45->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==46) {
-	if(isScint) h_sxy46->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy46->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==47) {
-	if(isScint) h_sxy47->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy47->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==48) {
-	if(isScint) h_sxy48->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy48->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==49) {
-	if(isScint) h_sxy49->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy49->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==50) {
-	if(isScint) h_sxy50->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy50->Fill(lHit.get_x(),lHit.get_y());
-      };
-      if(ilayer==51) {
-	if(isScint) h_sxy51->Fill(lHit.get_x(),lHit.get_y());
-	else h_nsxy51->Fill(lHit.get_x(),lHit.get_y());
-      };
+
+      h_zl->Fill(zh,ixx);
+      h_l2->Fill(layer+0.5);
+      h_xy->Fill(xh,yh);
+      h_etaphi->Fill(leta,lphi);
+
+      if(ip>=0) {
+	if(isScint) {
+	  //	  std::cout<<"ip rh is "<<ip<<" "<<rh<<std::endl;
+	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
+	  h_sxy[ip]->Fill(xh,yh);
+	  if(rh<rmins[ip]) {rmins[ip]=rh;}
+	  if(rh>rmaxs[ip]) {rmaxs[ip]=rh;}
+	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
+	} else {
+	  h_nsxy[ip]->Fill(xh,xh);
+	  if(rh<rminns[ip]) {rminns[ip]=rh;}
+	  if(rh>rmaxns[ip]) {rmaxns[ip]=rh;}
+	}
+      }
 
 
     }//loop on hits
+
+
 
     HGCSSRecoHit lHit = (*rechitvec)[iMax];
     double maxeta = lHit.eta();
@@ -626,6 +579,16 @@ int main(int argc, char** argv){//main
     geomConv.initialiseHistos();
     ievtRec++;
   }//loop on entries
+
+    if(debug) {
+      std::cout<<std::endl<<std::endl<<" min max dif scint cell is are "<<ibinScintmin<<" "<<ibinScintmax<<" "<<ibinScintmax-ibinScintmin<<std::endl;
+      std::cout<<std::endl<<std::endl<<"rmin max for layer"<<std::endl;;
+      for(unsigned ii(0);ii<16;ii++){
+	std::cout<<"   "<<ii+36<<" "<<rminns[ii]<<" "<<rmaxns[ii]<<" "<<rmins[ii]<<" "<<rmaxs[ii]<<std::endl;
+      }
+    }
+
+
 
   if(debug) std::cout<<"writing files"<<std::endl;
 
