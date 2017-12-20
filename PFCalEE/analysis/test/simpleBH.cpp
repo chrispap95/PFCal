@@ -531,10 +531,10 @@ int main(int argc, char** argv){//main
     double etaW=0.;
     double phiW=0.;
     double norm=0.;
-    //    double etaaxis=etagen;
-    //    double phiaxis=phigen;
-    double etaaxis=maxeta;
-    double phiaxis=maxphi;
+    double etaaxis=etagen;
+    double phiaxis=phigen;
+    //double etaaxis=maxeta;
+    //double phiaxis=maxphi;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       unsigned layer = lHit.layer();
