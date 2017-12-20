@@ -287,12 +287,16 @@ int main(int argc, char** argv){//main
 
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
   TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,2.);
+  TH1F* h_egenrecopphi = new TH1F("h_egenrecopphi","E reco sum over gen plus phi",100,0.,2.);
+  TH1F* h_egenrecomphi = new TH1F("h_egenrecomphi","E reco sum over gen minus phi",100,0.,2.);
 
 
   TH2F* h_EpCone = new TH2F("h_EpCone","Ereco/gen versus cone size",10,0.,1.,100,0.,2.);
   TH2F* h_EpPhi = new TH2F("h_EpPhi","Ereco/gen versus phi",100,-4.,4.,100,0.,2.);
   TH2F* h_etagenmax= new TH2F("h_etagenmax","eta gen vs max",100,1.,5.,100,1.,5.);
   TH2F* h_phigenmax= new TH2F("h_phigenmax","phi gen vs max",100,-4,4.,100,-4.,4.);
+  TH1F* h_phimax = new TH1F("h_phimax","phi of max hit",100,-4.,4.);
+  TH1F* h_etamax = new TH1F("h_etamax","eta of max hit",100,1.,5.);
   TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,1000.);
   TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,500.);
 
@@ -301,6 +305,8 @@ int main(int argc, char** argv){//main
   TH1F* h_cellids = new TH1F("h_cellids","scint cell is",25000,0.,5000000000.);
   TH2F* h_cellidz = new TH2F("h_cellidz","cell is versus z",5000,3100,5200,1000,0.,250000.);
 
+  TH2F* h_banana = new TH2F("h_banana","banana plot",1000,0.,500.,1000,0.,500.);
+  TH1F* h_fracBH = new TH1F("h_fracBH","fraction in BH",100,-01.,1.1);
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -412,13 +418,9 @@ int main(int argc, char** argv){//main
       ptgenpy=(*genvec)[0].py()/1000.;
       ptgenpz=(*genvec)[0].pz()/1000.;
       ptgen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy);
-      //double theta=atan(ptgen/ptgenpz);
-      //etagen=-log(tan(theta/2));
       etagen=(*genvec)[0].eta();
       Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
-      //phigen=atan2(ptgenpy,ptgenpx);
       phigen=(*genvec)[0].phi();
-      //if(phigen<0) phigen=2.*TMath::Pi()+phigen;
     }
     h_getaphi->Fill(etagen,phigen);
     if(debug) {
@@ -512,6 +514,8 @@ int main(int argc, char** argv){//main
     h_maxE->Fill(maxE);
     h_etagenmax->Fill(maxeta,etagen);
     h_phigenmax->Fill(maxphi,phigen);
+    h_phimax->Fill(maxphi);
+    h_etamax->Fill(maxeta);
     if(debug>2) {
       std::cout<<" Max hit energy eta phi "<<lHit.energy()<<" "<<lHit.eta()<<" "<<lHit.phi()<<std::endl;
     }
@@ -519,11 +523,11 @@ int main(int argc, char** argv){//main
     // make e/p plots for various cones around gen particle, using weights this time
     // for now, scale up by 10.  don't know why.  asking Anne-Marie
     // also change to GeV for this section
-    double rechitsumE01=0.;
-    double rechitsumE02=0.;
-    double rechitsumE03=0.;
-    double rechitsumE04=0.;
-    double rechitsumE05=0.;
+    const unsigned isize=5;
+    double coneSize[isize]={0.1,0.2,0.3,0.4,0.5};
+    double rechitsum[isize]={0.,0.,0.,0.,0.};
+    double rechitBHsum[isize]={0.,0.,0.,0.};
+
     double etaW=0.;
     double phiW=0.;
     double norm=0.;
@@ -551,29 +555,36 @@ int main(int argc, char** argv){//main
       double dR=DeltaR(etaaxis,phiaxis,leta,lphi);
       //double dR=fabs(etagen-leta);
       if(debug>20) std::cout<<" dR "<<dR<<" "<<etagen<<" "<<phigen<<" "<<leta<<" "<<lphi<<std::endl;
-      if(dR<0.1)  rechitsumE01+=lenergy;
-      if(dR<0.2)  rechitsumE02+=lenergy;      
-      if(dR<0.3)  rechitsumE03+=lenergy;
-      if(dR<0.4)  rechitsumE04+=lenergy;
-      if(dR<0.5)  rechitsumE05+=lenergy;
+      for(unsigned ii(0);ii<isize;ii++) {
+	if(dR<coneSize[ii]) {
+	  rechitsum[ii]+=lenergy;
+	  if(isScint) rechitBHsum[ii]+=lenergy;
+	}
+      }
+
 
     }//loop on hits
     if(debug>1) {
-      std::cout<<" reco gen are "<<rechitsumE01<<" "<<rechitsumE02<<" "<<rechitsumE03<<" "<<rechitsumE04<<" "<<rechitsumE05<<" "<<Egen<<std::endl;
+      std::cout<<" reco gen are "<<rechitsum[0]<<" "<<rechitsum[1]<<" "<<rechitsum[2]<<" "<<rechitsum[3]<<" "<<rechitsum[4]<<" "<<Egen<<std::endl;
     }
     if(debug>5) std::cout<<"weighted eta phi are "<<etaW/norm<<" "<<phiW/norm<<std::endl;
 
-    h_Egenreco->Fill(Egen,rechitsumE05/Egen);
-    h_egenreco->Fill(rechitsumE05/Egen);
-    h_EpPhi->Fill(phigen,rechitsumE02/Egen);
-    h_EpCone->Fill(0.1,rechitsumE01/Egen);
-    h_EpCone->Fill(0.2,rechitsumE02/Egen);
-    h_EpCone->Fill(0.3,rechitsumE03/Egen);
-    h_EpCone->Fill(0.4,rechitsumE04/Egen);
-    h_EpCone->Fill(0.5,rechitsumE05/Egen);
+    h_Egenreco->Fill(Egen,rechitsum[3]/Egen);
+    h_egenreco->Fill(rechitsum[3]/Egen);
+    if(phigen>0) h_egenrecopphi->Fill(rechitsum[3]/Egen);
+    else h_egenrecomphi->Fill(rechitsum[3]/Egen);
+    h_EpPhi->Fill(phigen,rechitsum[3]/Egen);
+    for(unsigned ii(0);ii<isize;ii++) {
+      h_EpCone->Fill(coneSize[ii],rechitsum[ii]/Egen);
+    }
+    h_banana->Fill(rechitsum[3]-rechitBHsum[3],rechitBHsum[3]);
+    double frac=-0.05;
+    double notBH=rechitsum[3]-rechitBHsum[3];
+    if(rechitsum[3]>0) frac=rechitBHsum[3]/rechitsum[3];
+    h_fracBH->Fill(frac);
     
 
-    h_ECone03->Fill(rechitsumE03);
+    h_ECone03->Fill(rechitsum[3]);
       //miptree->Fill();
 
     geomConv.initialiseHistos();
