@@ -51,6 +51,42 @@
 using boost::lexical_cast;
 namespace po=boost::program_options;
 
+void SNAPrec(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
+  std::cout<<"SNAP"<<std::endl;
+    for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
+      HGCSSRecoHit lHit = (*rechitvec)[iH];
+      double xh=lHit.get_x();
+      double yh=lHit.get_y();
+      double zh=lHit.get_z();
+      double rh=sqrt(xh*xh+yh*yh);
+      double Eh=lHit.energy();
+      h_1->Fill(zh,rh,Eh);
+    }
+
+  return;
+}
+
+void SNAPsim(TH2F* h_1,std::vector<HGCSSSimHit> *simhitvec,
+	     HGCSSDetector & myDetector,
+	     HGCSSGeometryConversion & aGeom,
+	     unsigned shape
+	     ) {
+  std::cout<<"SNAP"<<std::endl;
+    for (unsigned iH(0); iH<(*simhitvec).size(); ++iH){//loop on hits
+      HGCSSSimHit lHit = (*simhitvec)[iH];
+      unsigned layer = lHit.layer();
+      const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
+      ROOT::Math::XYZPoint pp = lHit.position(subdet,aGeom,shape);
+      double Eh=lHit.energy();
+      //std::cout<<Eh<<" "<<pp.z()<<" "<<pp.r()<<std::endl;
+      h_1->Fill(pp.z(),pp.r(),Eh);
+    }
+
+  return;
+}
+
+
+
 double DeltaR(double eta1,double phi1,double eta2,double phi2){
   double dr=99999.;
   double deta=fabs(eta1-eta2);
@@ -258,12 +294,31 @@ int main(int argc, char** argv){//main
   }
   outputFile->cd();
 
+  const int nsnap=10;
+  TH2F *h_snapr[nsnap];
+  TH2F *h_snaps[nsnap];
+  for(unsigned ii(0);ii<nsnap;ii++) {
+    std::ostringstream label;
+    label.str("");
+    label<<"E-weighted r-z of reco snap "<<ii;
+    h_snapr[ii]=new TH2F(label.str().c_str(),"E-weighted r-z of reco hit",500,3100.,5200.,2500,0.,2500.);
+    std::ostringstream label2;
+    label2.str("");
+    label2<<"E-weighted r-z of sim snap "<<ii;
+    h_snaps[ii]=new TH2F(label2.str().c_str(),"E-weighted r-z of sim hit",500,300.,500.,2500,250.,700.);
+
+  }
 
   TH1F* h_energy = new TH1F("h_energy","hit energy",1000,0.,5.);
   TH1F* h_z = new TH1F("h_z","z of hit",5000,3100.,5200);
   TH1F* h_z1 = new TH1F("h_z1","z of hit",5000,3150.,3550);
   TH1F* h_z2 = new TH1F("h_z2","z of hit",5000,3550.,5200);
   TH2F* h_xy = new TH2F("h_xy","xy of hit",1000,-2000,2000,1000,-2000,2000);
+  TH1F* h_phibad = new TH1F("h_phibad","gen phi of large neg hits",2000,-3.2,0);
+  TH1F* h_xbad = new TH1F("h_xbad","gen x of large neg hits",2000,-2500,2500);
+  TH1F* h_ybad = new TH1F("h_ybad","gen y of large neg hits",2000,-2500,2500);
+  TH2F* h_xrgood = new TH2F("h_xrgood"," x vs r good",1000,0.,2500.,1000,-2500.,2500.);
+  TH2F* h_yrgood = new TH2F("h_yrgood"," y vs r good",1000,0.,2500.,1000,-2500.,2500.);
   TH2F* h_etaphi = new TH2F("h_etaphi","etaphi of hit",1000,1,3.5,1000,-7,7);
   TH2F* h_getaphi = new TH2F("h_getaphi","gen part etaphi of hit",1000,1,3.5,1000,-7,7);
   TH1F* h_l = new TH1F("h_l","layer of hit",80,0.,80.);
@@ -349,15 +404,21 @@ int main(int argc, char** argv){//main
   unsigned nSkipped = 0;
   std::vector<double> absW;
   bool firstEvent = true;
-  unsigned ibinScintmin=10000000000;
+  unsigned ibinScintmin=1000000;
   unsigned ibinScintmax=0;
   
   double rmaxs[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double rmins[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
   double rmaxns[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double rminns[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
-  
 
+
+  double xmax[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double xmin[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  double ymax[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double ymin[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  
+  int isnap=-1;
   for (unsigned ievt(0); ievt<nEvts; ++ievt){//loop on entries
     if (ievtRec>=lRecTree->GetEntries()) continue;
 
@@ -411,6 +472,7 @@ int main(int argc, char** argv){//main
     double ptgenpz=-1.;
     double etagen=99999.;
     double phigen=99999.;
+    double thetagen=-1.;
     int pidgen=-1;
     if((*genvec).size()>0) {
       pidgen=(*genvec)[0].pdgid();
@@ -421,6 +483,7 @@ int main(int argc, char** argv){//main
       etagen=(*genvec)[0].eta();
       Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
       phigen=(*genvec)[0].phi();
+      thetagen=(*genvec)[0].theta();
     }
     h_getaphi->Fill(etagen,phigen);
     if(debug) {
@@ -438,6 +501,7 @@ int main(int argc, char** argv){//main
     // make some simple plots about all the raw rechits, without the weights
     unsigned iMax=-1;
     double MaxE=-1.;
+    bool snap=false;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       double xh=lHit.get_x();
@@ -487,7 +551,38 @@ int main(int argc, char** argv){//main
       h_xy->Fill(xh,yh);
       h_etaphi->Fill(leta,lphi);
 
+
+
       if(ip>=0) {
+	if(debug>4) {
+	  if(xh>5000) std::cout<<"large xh "<<xh<<" phigen is "<<phigen<<" yh rh zh are"<<yh<<" "<<rh<<" "<<zh<<std::endl;
+	}
+	if(xh>5000) {
+	  if(!snap) {
+	  if(isnap<nsnap-1) {
+	    snap=true;
+	    isnap+=1;
+	    std::cout<<" isnap is "<<isnap<<std::endl;
+	    SNAPrec(h_snapr[isnap],rechitvec);
+	    SNAPsim(h_snaps[isnap],simhitvec,myDetector,geomConv,shape);
+	  }
+	  }
+	  double rr=zh*tan(thetagen);
+	  double xx=rr*cos(phigen);
+	  double yy=rr*sin(phigen);
+	  h_phibad->Fill(phigen);
+	  h_xbad->Fill(xx);
+	  h_ybad->Fill(yy);
+	} else {
+	  
+	  h_xrgood->Fill(rh,xh);
+	  h_yrgood->Fill(rh,yh);
+	}
+       if(xh<xmin[ip]) {xmin[ip]=xh;}
+       if(xh>xmax[ip]) {xmax[ip]=xh;}
+       if(yh<ymin[ip]) {ymin[ip]=yh;}
+       if(yh>ymax[ip]) {ymax[ip]=yh;}
+
 	if(isScint) {
 	  //	  std::cout<<"ip rh is "<<ip<<" "<<rh<<std::endl;
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
@@ -596,6 +691,14 @@ int main(int argc, char** argv){//main
       std::cout<<std::endl<<std::endl<<"rmin max for layer"<<std::endl;;
       for(unsigned ii(0);ii<16;ii++){
 	std::cout<<"   "<<ii+36<<" "<<rminns[ii]<<" "<<rmaxns[ii]<<" "<<rmins[ii]<<" "<<rmaxs[ii]<<std::endl;
+      }
+      std::cout<<std::endl<<std::endl<<"xmin max for layer"<<std::endl;;
+      for(unsigned ii(0);ii<16;ii++){
+	std::cout<<"   "<<ii+36<<" "<<xmin[ii]<<" "<<xmax[ii]<<std::endl;
+      }
+      std::cout<<std::endl<<std::endl<<"ymin max for layer"<<std::endl;;
+      for(unsigned ii(0);ii<16;ii++){
+	std::cout<<"   "<<ii+36<<" "<<ymin[ii]<<" "<<ymax[ii]<<std::endl;
       }
     }
 
