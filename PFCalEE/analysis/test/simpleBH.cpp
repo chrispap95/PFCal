@@ -53,6 +53,8 @@ namespace po=boost::program_options;
 
 void SNAPrec(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
   std::cout<<"SNAP"<<std::endl;
+  double xmax = h_1->GetXaxis()->GetXmax();
+  double ymax = h_1->GetYaxis()->GetXmax();
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       double xh=lHit.get_x();
@@ -60,7 +62,7 @@ void SNAPrec(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
       double zh=lHit.get_z();
       double rh=sqrt(xh*xh+yh*yh);
       double Eh=lHit.energy();
-      h_1->Fill(zh,rh,Eh);
+      h_1->Fill(std::min(zh,xmax-0.001),std::min(rh,ymax-0.001),Eh);
     }
 
   return;
@@ -72,6 +74,8 @@ void SNAPsim(TH2F* h_1,std::vector<HGCSSSimHit> *simhitvec,
 	     unsigned shape
 	     ) {
   std::cout<<"SNAP"<<std::endl;
+  double xmax = h_1->GetXaxis()->GetXmax();
+  double ymax = h_1->GetYaxis()->GetXmax();
     for (unsigned iH(0); iH<(*simhitvec).size(); ++iH){//loop on hits
       HGCSSSimHit lHit = (*simhitvec)[iH];
       unsigned layer = lHit.layer();
@@ -79,7 +83,7 @@ void SNAPsim(TH2F* h_1,std::vector<HGCSSSimHit> *simhitvec,
       ROOT::Math::XYZPoint pp = lHit.position(subdet,aGeom,shape);
       double Eh=lHit.energy();
       //std::cout<<Eh<<" "<<pp.z()<<" "<<pp.r()<<std::endl;
-      h_1->Fill(pp.z(),pp.r(),Eh);
+      h_1->Fill(std::min(pp.z(),xmax-0.001),std::min(pp.r(),ymax-0.001),Eh);
     }
 
   return;
