@@ -51,7 +51,25 @@
 using boost::lexical_cast;
 namespace po=boost::program_options;
 
-void SNAPrec(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
+void SNAPrec_rl(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
+  std::cout<<"SNAP"<<std::endl;
+  double ymax = h_1->GetYaxis()->GetXmax();
+    for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
+      HGCSSRecoHit lHit = (*rechitvec)[iH];
+      double xh=lHit.get_x();
+      double yh=lHit.get_y();
+      unsigned ilayer=lHit.layer();
+      //unsigned ixx=ilayer;
+      //if(ixx>52) ixx=ixx-17;
+      double rh=sqrt(xh*xh+yh*yh);
+      double Eh=lHit.energy();
+      h_1->Fill(ilayer+0.5,std::min(rh,ymax-200.),Eh);
+    }
+
+  return;
+}
+
+void SNAPrec_rz(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
   std::cout<<"SNAP"<<std::endl;
   double xmax = h_1->GetXaxis()->GetXmax();
   double ymax = h_1->GetYaxis()->GetXmax();
@@ -62,7 +80,7 @@ void SNAPrec(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
       double zh=lHit.get_z();
       double rh=sqrt(xh*xh+yh*yh);
       double Eh=lHit.energy();
-      h_1->Fill(std::min(zh,xmax-0.001),std::min(rh,ymax-0.001),Eh);
+      h_1->Fill(std::min(zh,xmax-0.001),std::min(rh,ymax-200.),Eh);
     }
 
   return;
@@ -299,17 +317,22 @@ int main(int argc, char** argv){//main
   outputFile->cd();
 
   const int nsnap=10;
-  TH2F *h_snapr[nsnap];
+  TH2F *h_snaprz[nsnap];
+  TH2F *h_snaprl[nsnap];
   TH2F *h_snaps[nsnap];
   for(unsigned ii(0);ii<nsnap;ii++) {
     std::ostringstream label;
     label.str("");
-    label<<"E-weighted r-z of reco snap "<<ii;
-    h_snapr[ii]=new TH2F(label.str().c_str(),"E-weighted r-z of reco hit",500,3100.,5200.,2500,0.,2500.);
+    label<<"h_Erlrecosnap_"<<ii;
+    h_snaprl[ii]=new TH2F(label.str().c_str(),"E-weighted r-z of reco hit",72,0.,72.,250,0.,3000.);
+    std::ostringstream label3;
+    label3.str("");
+    label3<<"h_Erzrecosnap_"<<ii;
+    h_snaprz[ii]=new TH2F(label3.str().c_str(),"E-weighted r-z of reco hit",5000,3100.,5200.,250,0.,3000.);
     std::ostringstream label2;
     label2.str("");
-    label2<<"E-weighted r-z of sim snap "<<ii;
-    h_snaps[ii]=new TH2F(label2.str().c_str(),"E-weighted r-z of sim hit",500,300.,500.,2500,250.,700.);
+    label2<<"Erzsimsnap_"<<ii;
+    h_snaps[ii]=new TH2F(label2.str().c_str(),"E-weighted r-z of sim hit",500,300.,500.,250,250.,700.);
 
   }
 
@@ -410,6 +433,7 @@ int main(int argc, char** argv){//main
   bool firstEvent = true;
   unsigned ibinScintmin=1000000;
   unsigned ibinScintmax=0;
+  unsigned badlaymin=10000;
   
   double rmaxs[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   double rmins[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
@@ -492,7 +516,7 @@ int main(int argc, char** argv){//main
     h_getaphi->Fill(etagen,phigen);
     if(debug) {
       std::cout<<" gen vec size is "<<(*genvec).size()<<std::endl;
-      std::cout<<" first gen "<<ptgen<<" "<<Egen<<" "<<pidgen<<" "<<etagen<<" "<<phigen<<std::endl;
+      std::cout<<" first gen pt E pid eta phi "<<ptgen<<" "<<Egen<<" "<<pidgen<<" "<<etagen<<" "<<phigen<<std::endl;
       for (unsigned iP(0); iP<(*genvec).size(); ++iP){
         std::cout<<" gen particle "<<iP<<" is "<<(*genvec)[iP].pdgid()<<std::endl;
       }
@@ -558,16 +582,16 @@ int main(int argc, char** argv){//main
 
 
       if(ip>=0) {
-	if(debug>4) {
-	  if(xh>5000) std::cout<<"large xh "<<xh<<" phigen is "<<phigen<<" yh rh zh are"<<yh<<" "<<rh<<" "<<zh<<std::endl;
-	}
 	if(xh>5000) {
+	  std::cout<<"large x-hit "<<xh<<" y-hit z-hit layer energy are "<<yh<<" "<<zh<<" "<<layer<<" "<<Eh<<std::endl;
+	  if(layer<badlaymin) badlaymin=layer;
 	  if(!snap) {
 	  if(isnap<nsnap-1) {
 	    snap=true;
 	    isnap+=1;
 	    std::cout<<" isnap is "<<isnap<<std::endl;
-	    SNAPrec(h_snapr[isnap],rechitvec);
+	    SNAPrec_rl(h_snaprl[isnap],rechitvec);
+	    SNAPrec_rz(h_snaprz[isnap],rechitvec);
 	    SNAPsim(h_snaps[isnap],simhitvec,myDetector,geomConv,shape);
 	  }
 	  }
@@ -582,10 +606,10 @@ int main(int argc, char** argv){//main
 	  h_xrgood->Fill(rh,xh);
 	  h_yrgood->Fill(rh,yh);
 	}
-       if(xh<xmin[ip]) {xmin[ip]=xh;}
-       if(xh>xmax[ip]) {xmax[ip]=xh;}
-       if(yh<ymin[ip]) {ymin[ip]=yh;}
-       if(yh>ymax[ip]) {ymax[ip]=yh;}
+	if(xh<xmin[ip]) {xmin[ip]=xh;}
+        if(xh>xmax[ip]) {xmax[ip]=xh;}
+        if(yh<ymin[ip]) {ymin[ip]=yh;}
+        if(yh>ymax[ip]) {ymax[ip]=yh;}
 
 	if(isScint) {
 	  //	  std::cout<<"ip rh is "<<ip<<" "<<rh<<std::endl;
@@ -706,7 +730,7 @@ int main(int argc, char** argv){//main
       }
     }
 
-
+    if(debug){ std::cout<<"badlayermin is "<<badlaymin<<std::endl;}
 
   if(debug) std::cout<<"writing files"<<std::endl;
 
