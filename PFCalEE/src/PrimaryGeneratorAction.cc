@@ -57,6 +57,8 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(G4int mod, double eta)
   eta_ = eta;
   G4int n_particle = 1;
 
+  eta_=1.8;
+
   // default generator is particle gun.
   currentGenerator= particleGun= new G4ParticleGun(n_particle);
   currentGeneratorName= "particleGun";
@@ -131,13 +133,15 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     break;
   default: break;
   }
-
+  std::cout<<"will robinson 2 eta is "<<eta_<<std::endl;
+  
   particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
   G4cout << " -- Gun position set to: " << x0 << "," << y0 << "," << z0 << G4endl;
-
+  
   G4double theta0 = 2*atan(exp(-1*eta_));
   G4double phi0 = (G4RandFlat::shoot(0.,2*PI));
   if (model_ == 2) particleGun->SetParticleMomentumDirection(G4ThreeVector(cos(phi0)*sin(theta0), sin(phi0)*sin(theta0), cos(theta0)));
+  std::cout<<"theta0 phi0 are "<<theta0<<" "<<phi0<<std::endl;
   
   if(currentGenerator){
     currentGenerator->GeneratePrimaryVertex(anEvent);
