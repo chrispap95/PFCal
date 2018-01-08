@@ -381,6 +381,7 @@ int main(int argc, char** argv){//main
   TH1F* h_etamax = new TH1F("h_etamax","eta of max hit",100,1.,5.);
   TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,1000.);
   TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,500.);
+  TH1F* h_simHit03 = new TH1F("h_simHit03","Sum simhit energy cone 03",1000,0.,500.);
 
   TH2F* h_ssvec = new TH2F("h_ssvec","ssvec versus layer number", 70,0.,70.,100,0.,100.);
   TH1F* h_cellid = new TH1F("h_cellid","cell is",25000,0.,250000.);
@@ -708,6 +709,62 @@ int main(int argc, char** argv){//main
     
 
     h_ECone03->Fill(rechitsum[3]);
+
+
+
+
+
+    // make plots about simhits
+
+    double simHitSum=0.;
+    double maxSim=0.;
+    double msxH=0.;
+    double msyH=0.;
+    double mszH=0.;
+    double msleta=0.;
+    double mslphi=0.;
+
+    unsigned isimMax=-1;
+    for (unsigned iH(0); iH<(*simhitvec).size(); ++iH){//loop on hits
+      HGCSSSimHit lHit = (*simhitvec)[iH];
+      unsigned layer = lHit.layer();
+      const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
+      ROOT::Math::XYZPoint haha = lHit.position(subdet,geomConv,shape);
+      double xH=haha.x();
+      double yH=haha.y();
+      double zH = haha.z();
+      double rH=sqrt(xH*xH+yH*yH);
+      double tant = rH/zH;
+      double theta=atan(tant);
+      double leta=-log(tan(theta/2.));
+      double lphi = atan2(yH,xH);
+      double lenergy=lHit.energy()*absW[layer]/1000.;
+      if(lenergy>maxSim) {
+	maxSim=lenergy;
+	msxH=xH;
+	msyH=yH;
+	mszH=zH;
+	msleta=leta;
+	mslphi=lphi;
+	isimMax=iH;
+      }
+
+      double dR=DeltaR(etaaxis,phiaxis,leta,lphi);
+      if(dR<0.3) {
+	simHitSum+=lenergy;
+      }
+
+    }//loop on simhits
+
+
+    if(debug>2) {
+      std::cout<<"max sim hit x y z eta phi energy "<<msxH<<" "<<msyH<<" "<<mszH<<" "<<msleta<<" "<<mslphi<<" "<<maxSim<<std::endl;
+
+    }
+    h_simHit03->Fill(simHitSum);
+
+
+
       //miptree->Fill();
 
     geomConv.initialiseHistos();
