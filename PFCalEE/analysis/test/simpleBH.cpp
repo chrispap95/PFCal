@@ -651,8 +651,8 @@ int main(int argc, char** argv){//main
 	  //	  std::cout<<"ip rh is "<<ip<<" "<<rh<<std::endl;
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
 	  h_sxy[ip]->Fill(xh,yh);
-	  double abc=h_scellid[ip]->GetBinContent(pos.eta(),pos.phi());
-	  if(abc<0.5) h_scellid[ip]->Fill(pos.eta(),pos.phi(),cellid);
+	  double abc=h_scellid[ip]->GetBinContent(pos.phi(),pos.eta());
+	  if(abc<0.5) h_scellid[ip]->Fill(pos.phi(),pos.eta(),cellid);
 	  if(rh<rmins[ip]) {rmins[ip]=rh;}
 	  if(rh>rmaxs[ip]) {rmaxs[ip]=rh;}
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
