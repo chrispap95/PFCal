@@ -21,6 +21,7 @@ HGCSSSimHit::HGCSSSimHit(const G4SiHit & aSiHit,
   //double z = aSiHit.hit_x;
   double x = aSiHit.hit_x;
   double y = aSiHit.hit_y;
+  double eee = aSiHit.energy;
   //cellid encoding:
   //map->Reset("");
   //map->Fill(x,y);
@@ -31,7 +32,21 @@ HGCSSSimHit::HGCSSSimHit(const G4SiHit & aSiHit,
     ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(x,y,zpos_);
     cellid_ = map->FindBin(pos.eta(),pos.phi());
   }
-  else cellid_ = map->FindBin(x,y);
+  else {
+    cellid_ = map->FindBin(x,y);
+      double dbgphi=atan2(y,x);
+      double dbgr=sqrt(x*x+y*y);
+      double dbgtantheta=dbgr/zpos_;
+      double dbgtheta=atan(dbgtantheta);
+      double dbgeta=-log(tan(dbgtheta/2.));
+
+    if(cellid_>1000000) {
+      std::cout<<"danger danger id energy x y r z phi eta "<<cellid_<<" "<<eee<<" "<<x<<","<<y<<" "<<dbgr<<" "<<zpos_<<" "<<dbgphi<<" "<<dbgeta<<std::endl;
+    } else {
+      std::cout<<"good          id energy x y r z phi eta "<<cellid_<<" "<<eee<<" "<<x<<","<<y<<" "<<dbgr<<" "<<zpos_<<" "<<dbgphi<<" "<<dbgeta<<std::endl;
+
+    }
+  }
   
   //for (int ix(1);ix<map->GetNumberOfBins()+1; ++ix){
   //if (map->GetBinContent(ix)!=0)

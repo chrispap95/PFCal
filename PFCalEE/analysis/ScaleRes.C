@@ -12,8 +12,10 @@
 
 
 
-void ScaleRes() 
+void ScaleRes(unsigned imode) 
 { 
+  if(imode>2) std::cout<<"invalid imode choice "<<imode<<std::endl;
+  if(imode<1) std::cout<<"invalid imode choice "<<imode<<std::endl;
 
   gStyle->SetOptStat(0);
   gStyle->SetOptFit();
@@ -68,7 +70,8 @@ void ScaleRes()
 
   std::cout<<"will robinson"<<std::endl;
   for(int i(0);i<n_f;i++) {
-    energies[i]=ets[i]/sin(scetheta);
+    if(imode==1) {energies[i]=ets[i]/sin(scetheta);}
+    else {energies[i]=ets[i];}
     std::cout<<" energy is "<<energies[i]<<std::endl;
     std::ostringstream sceName;
     sceName << "et" << ets[i] << "_eta1.7.root";
@@ -104,7 +107,8 @@ void ScaleRes()
   t->SetTextFont(62);
   t->SetTextColor(36);
   t->SetTextSize(0.04);
-  t->DrawLatex(50.,0.042," energy (GeV)");
+  if(imode==1) t->DrawLatex(50.,0.042," energy (GeV)");
+  if(imode==2) t->DrawLatex(50.,0.042," ET (GeV)");
   t->SetTextAngle(90);
   t->DrawLatex(-20.,0.08," width/mean");
 

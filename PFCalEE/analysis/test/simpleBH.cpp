@@ -385,7 +385,8 @@ int main(int argc, char** argv){//main
 
   TH2F* h_ssvec = new TH2F("h_ssvec","ssvec versus layer number", 70,0.,70.,100,0.,100.);
   TH1F* h_cellid = new TH1F("h_cellid","cell is",25000,0.,250000.);
-  TH1F* h_cellids = new TH1F("h_cellids","scint cell is",25000,0.,5000000000.);
+  TH1F* h_cellids = new TH1F("h_cellids","nax scint sim cell is",250,0.,10.);
+  TH1F* h_badcellids = new TH1F("h_badcellids","bad max scint sim cell is",250,0.,10.);
   TH2F* h_cellidz = new TH2F("h_cellidz","cell is versus z",5000,3100,5200,1000,0.,250000.);
 
   TH2F* h_banana = new TH2F("h_banana","banana plot",1000,0.,500.,1000,0.,500.);
@@ -432,7 +433,7 @@ int main(int argc, char** argv){//main
   unsigned nSkipped = 0;
   std::vector<double> absW;
   bool firstEvent = true;
-  unsigned ibinScintmin=1000000;
+  unsigned ibinScintmin=4294967295;
   unsigned ibinScintmax=0;
   unsigned badlaymin=10000;
   
@@ -522,6 +523,9 @@ int main(int argc, char** argv){//main
         std::cout<<" gen particle "<<iP<<" is "<<(*genvec)[iP].pdgid()<<std::endl;
       }
     }
+    double etaaxis=etagen;
+    double phiaxis=phigen;
+
 
 
     bool isScint = false;
@@ -553,7 +557,15 @@ int main(int argc, char** argv){//main
 	: shape==2?geomConv.diamondMap() 
 	: shape==3? geomConv.triangleMap()
 	: geomConv.hexagonMap();
-      unsigned cellid = map->FindBin(xh,yh);
+      unsigned cellid = 0;
+      if (isScint){
+	ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
+	cellid = map->FindBin(pos.eta(),pos.phi());
+      } else {
+	cellid = map->FindBin(lHit.get_x(),lHit.get_y());
+      }
+
+
       geomConv.fill(layer,Eh,0,cellid,zh);
 
       if(Eh>MaxE) {MaxE=Eh; iMax=iH;}
@@ -561,9 +573,11 @@ int main(int argc, char** argv){//main
 
       h_cellid->Fill(cellid);
       if(isScint) {
+	if(cellid<4000000000) { // temp fix until Anne-Marie fixes the geometry problem
 	if(cellid>ibinScintmax) ibinScintmax=cellid;
 	if(cellid<ibinScintmin) ibinScintmin=cellid;
-	h_cellids->Fill(cellid);
+	}
+	std::cout<<" haha "<<cellid<<" "<<ibinScintmin<<" "<<ibinScintmax<<std::endl;
       }
       h_cellidz->Fill(zh,cellid);
 
@@ -607,6 +621,7 @@ int main(int argc, char** argv){//main
 	  h_xrgood->Fill(rh,xh);
 	  h_yrgood->Fill(rh,yh);
 	}
+	if(cellid<4000000000) {  // temp fix until Anne-Marie fixes cell geo problem
 	if(xh<xmin[ip]) {xmin[ip]=xh;}
         if(xh>xmax[ip]) {xmax[ip]=xh;}
         if(yh<ymin[ip]) {ymin[ip]=yh;}
@@ -623,6 +638,7 @@ int main(int argc, char** argv){//main
 	  h_nsxy[ip]->Fill(xh,yh);
 	  if(rh<rminns[ip]) {rminns[ip]=rh;}
 	  if(rh>rmaxns[ip]) {rmaxns[ip]=rh;}
+	}
 	}
       }
 
@@ -644,6 +660,8 @@ int main(int argc, char** argv){//main
       std::cout<<" Max hit energy eta phi "<<lHit.energy()<<" "<<lHit.eta()<<" "<<lHit.phi()<<std::endl;
     }
 
+
+
     // make e/p plots for various cones around gen particle, using weights this time
     // for now, scale up by 10.  don't know why.  asking Anne-Marie
     // also change to GeV for this section
@@ -655,10 +673,6 @@ int main(int argc, char** argv){//main
     double etaW=0.;
     double phiW=0.;
     double norm=0.;
-    double etaaxis=etagen;
-    double phiaxis=phigen;
-    //double etaaxis=maxeta;
-    //double phiaxis=maxphi;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       unsigned layer = lHit.layer();
@@ -723,6 +737,7 @@ int main(int argc, char** argv){//main
     double mszH=0.;
     double msleta=0.;
     double mslphi=0.;
+    unsigned mscellid=0;
 
     unsigned isimMax=-1;
     for (unsigned iH(0); iH<(*simhitvec).size(); ++iH){//loop on hits
@@ -739,6 +754,8 @@ int main(int argc, char** argv){//main
       double leta=-log(tan(theta/2.));
       double lphi = atan2(yH,xH);
       double lenergy=lHit.energy()*absW[layer]/1000.;
+      unsigned lcellid=lHit.cellid();
+      isScint = subdet.isScint;
       if(lenergy>maxSim) {
 	maxSim=lenergy;
 	msxH=xH;
@@ -747,6 +764,7 @@ int main(int argc, char** argv){//main
 	msleta=leta;
 	mslphi=lphi;
 	isimMax=iH;
+	mscellid=lcellid;
       }
 
       double dR=DeltaR(etaaxis,phiaxis,leta,lphi);
@@ -755,10 +773,17 @@ int main(int argc, char** argv){//main
       }
 
     }//loop on simhits
+    double logmaxcellid=log10(4293967295);
+    if(mscellid>0) logmaxcellid=log10(mscellid);
+    h_cellids->Fill(logmaxcellid);
+    double dR=DeltaR(etaaxis,phiaxis,msleta,mslphi);
+    if(dR>0.5) {
+      h_badcellids->Fill(logmaxcellid);
+    }
 
 
     if(debug>2) {
-      std::cout<<"max sim hit x y z eta phi energy "<<msxH<<" "<<msyH<<" "<<mszH<<" "<<msleta<<" "<<mslphi<<" "<<maxSim<<std::endl;
+      std::cout<<"max sim hit cellid x y z eta phi energy "<<mscellid<<" "<<msxH<<" "<<msyH<<" "<<mszH<<" "<<msleta<<" "<<mslphi<<" "<<maxSim<<std::endl;
 
     }
     h_simHit03->Fill(simHitSum);

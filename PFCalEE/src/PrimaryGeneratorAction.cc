@@ -57,7 +57,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(G4int mod, double eta)
   eta_ = eta;
   G4int n_particle = 1;
 
-  eta_=1.8;
+  //eta_=1.8;
 
   // default generator is particle gun.
   currentGenerator= particleGun= new G4ParticleGun(n_particle);

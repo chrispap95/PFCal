@@ -3,8 +3,8 @@ Executable = condor-executable.sh
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 Requirements = TARGET.FileSystemDomain == "privnet"
-Output = simple_sce_$(cluster)_$(process).stdout
-Error = simple_sce_$(cluster)_$(process).stderr
-Log = simple_sce_$(cluster)_$(process).condor
-Arguments = simple $(process) /data/users/eno/StandAlone/PFCal/PFCalEE/analysis -c/data/users/eno/StandAlone/PFCal/PFCalEE/analysis/scripts/haha.cfg
+Output = simpleBH_sce_$(cluster)_$(process).stdout
+Error = simpleBH_sce_$(cluster)_$(process).stderr
+Log = simpleBH_sce_$(cluster)_$(process).condor
+Arguments = simple $(process) /data/users/eno/StandAlone/PFCal/PFCalEE/analysis 
 Queue 1
