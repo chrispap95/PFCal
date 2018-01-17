@@ -353,8 +353,9 @@ int main(int argc, char** argv){//main
   TH2F* h_zl = new TH2F("h_zl","z vs l of hit",5000,4300.,5200,25,30.,55.);
 
 
-  TH2F *h_sxy[16];
-  TH2F *h_nsxy[16];
+  TH2F *h_sxy[16]; // last 16 layers, scint part
+  TH2F *h_nsxy[16];  // last 16 layers, not scint part
+  TH2F *h_scellid[16];
   for(unsigned ii(0);ii<16;ii++) {
     std::ostringstream label;
     label.str("");
@@ -365,6 +366,11 @@ int main(int argc, char** argv){//main
     label2<<"xy of hit not scint "<<ii+36;
     h_nsxy[ii]=new TH2F(label2.str().c_str(),"xy of hit not scint",
         2500,-2500.,2500.,2500,-2500.,2500.);
+    std::ostringstream label3;
+    label3.str("");
+    label3<<"cellidscint"<<ii+36;
+    h_scellid[ii]=new TH2F(label3.str().c_str(),"cellid scint",
+			2500,-3.2,6.4,2500,1.3,3.5);
   }
 
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
@@ -385,9 +391,13 @@ int main(int argc, char** argv){//main
 
   TH2F* h_ssvec = new TH2F("h_ssvec","ssvec versus layer number", 70,0.,70.,100,0.,100.);
   TH1F* h_cellid = new TH1F("h_cellid","cell is",25000,0.,250000.);
-  TH1F* h_cellids = new TH1F("h_cellids","nax scint sim cell is",250,0.,10.);
+  TH1F* h_cellids = new TH1F("h_cellids","max scint sim cell is",250,0.,10.);
   TH1F* h_badcellids = new TH1F("h_badcellids","bad max scint sim cell is",250,0.,10.);
-  TH2F* h_cellidz = new TH2F("h_cellidz","cell is versus z",5000,3100,5200,1000,0.,250000.);
+  TH2F* h_cellidz = new TH2F("h_cellidz","cell id versus z",5000,3100,5200,1000,0.,250000.);
+  TH2F* h_cellidzs = new TH2F("h_cellidzs","scint cell id versus z exclude bad",5000,3100,5200,13336,0.,13336.);
+  TH2F* h_cellidphis = new TH2F("h_cellidphis","scint cell id versus phi exclude bad",5000,-3.2,6.4,13336,0.,13336.);
+  TH2F* h_cellidphibs = new TH2F("h_cellidphibs","scint cell id versus phi bad",5000,-3.2,6.4,13336,0.,13336.);
+  TH2F* h_cellidetas = new TH2F("h_cellidetas","scint cell id versus eta exclude bad",5000,1.3,3.2,13336,0.,13336.);
 
   TH2F* h_banana = new TH2F("h_banana","banana plot",1000,0.,500.,1000,0.,500.);
   TH1F* h_fracBH = new TH1F("h_fracBH","fraction in BH",100,-01.,1.1);
@@ -558,9 +568,11 @@ int main(int argc, char** argv){//main
 	: shape==3? geomConv.triangleMap()
 	: geomConv.hexagonMap();
       unsigned cellid = 0;
+      ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
       if (isScint){
-	ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
-	cellid = map->FindBin(pos.eta(),pos.phi());
+	double aaaphi = pos.phi();
+	if(aaaphi<0) aaaphi+=2.*TMath::Pi();
+	cellid = map->FindBin(pos.eta(),aaaphi);
       } else {
 	cellid = map->FindBin(lHit.get_x(),lHit.get_y());
       }
@@ -577,10 +589,18 @@ int main(int argc, char** argv){//main
 	if(cellid>ibinScintmax) ibinScintmax=cellid;
 	if(cellid<ibinScintmin) ibinScintmin=cellid;
 	}
-	std::cout<<" haha "<<cellid<<" "<<ibinScintmin<<" "<<ibinScintmax<<std::endl;
+	//std::cout<<" haha "<<cellid<<" "<<ibinScintmin<<" "<<ibinScintmax<<std::endl;
       }
       h_cellidz->Fill(zh,cellid);
-
+      if(isScint) {
+	if(cellid<100000) {
+	  h_cellidzs->Fill(zh,cellid);
+	  h_cellidphis->Fill(pos.phi(),cellid);
+	  h_cellidetas->Fill(pos.eta(),cellid);
+	} else {
+	  h_cellidphibs->Fill(pos.phi(),10000);
+	}
+      }
 
       h_energy->Fill(Eh);
       h_z->Fill(zh);
@@ -631,6 +651,8 @@ int main(int argc, char** argv){//main
 	  //	  std::cout<<"ip rh is "<<ip<<" "<<rh<<std::endl;
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
 	  h_sxy[ip]->Fill(xh,yh);
+	  double abc=h_scellid[ip]->GetBinContent(pos.eta(),pos.phi());
+	  if(abc<0.5) h_scellid[ip]->Fill(pos.eta(),pos.phi(),cellid);
 	  if(rh<rmins[ip]) {rmins[ip]=rh;}
 	  if(rh>rmaxs[ip]) {rmaxs[ip]=rh;}
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
