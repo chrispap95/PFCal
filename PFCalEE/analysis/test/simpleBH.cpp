@@ -419,6 +419,7 @@ int main(int argc, char** argv){//main
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
   TH1F* h_egenreco = new TH1F("h_egenreco","E reco sum over gen",100,0.,2.);
   TH1F* h_egenrecopphi = new TH1F("h_egenrecopphi","E reco sum over gen plus phi",100,0.,2.);
+  TH1F* h_egenrecopphidead = new TH1F("h_egenrecopphidead","E reco sum over gen plus phi",100,0.,2.);
   TH1F* h_egenrecomphi = new TH1F("h_egenrecomphi","E reco sum over gen minus phi",100,0.,2.);
 
 
@@ -447,8 +448,34 @@ int main(int argc, char** argv){//main
 
 
   //////////////////////////////
+  // for missing channel study
+  //
 
+  
+  //const double deadfrac=0.00003;
+  const double deadfrac=0.5;
+  std::set<std::pair<unsigned, unsigned>> deadlist;
+  unsigned nchan=0;
+  for(int i(0);i<nscintlayer;i++) {
+    nchan+=(scintmaxid[i]-scintminid[i]);
+  }
+  std::cout<<"total number scintillator channels is "<<nchan<<std::endl;
+  unsigned ndead=deadfrac*nchan;
+  unsigned ld;
+  unsigned cd;
+  unsigned range;
 
+  for(int i(0);i<ndead;i++) {
+    ld=lRndm.Integer(nscintlayer);
+    range=scintmaxid[ld]-scintminid[ld];
+    cd=scintminid[ld]+(lRndm.Integer(range));
+    std::cout<<ld<<" "<<cd<<std::endl;
+    deadlist.insert(std::make_pair(ld,cd));    
+  }
+  std::cout<<" dead list is "<<std::endl;
+  for(auto itr=deadlist.begin();itr!=deadlist.end();itr++ ) {
+    std::cout<<(*itr).first<<" "<<(*itr).second<<std::endl;
+  }
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -675,7 +702,7 @@ int main(int argc, char** argv){//main
 
       if(ip>=0) { // look at layers with scintillator
 	if(xh>5000) {  // weird hits
-	  std::cout<<"large x-hit "<<xh<<" y-hit z-hit layer energy are "<<yh<<" "<<zh<<" "<<layer<<" "<<Eh<<std::endl;
+	  if(debug>5) std::cout<<"large x-hit "<<xh<<" y-hit z-hit layer energy are "<<yh<<" "<<zh<<" "<<layer<<" "<<Eh<<std::endl;
 	  if(layer<badlaymin) badlaymin=layer;
 	  if(!snap) {
 	    if(isnap<nsnap-1) {
@@ -736,12 +763,12 @@ int main(int argc, char** argv){//main
 		  if(acellid<4000000000) {
 		    if((apos.x()<-500)&&(apos.y()<-500) ) {
 		    if((apos.x()>-600)&&(apos.y()>-600) ) {
-		      std::cout<<"michael "<<ip<<" "<<apos.x()<<" "<<apos.y()<<" "<<apos.eta()<<" "<<apos.phi()<<" "<<acellid<<std::endl;
+		      //		      std::cout<<"michael "<<ip<<" "<<apos.x()<<" "<<apos.y()<<" "<<apos.eta()<<" "<<apos.phi()<<" "<<acellid<<std::endl;
 		    }
 		    }
 		    if((apos.x()>500)&&(apos.y()>500) ) {
 		    if((apos.x()<600)&&(apos.y()<600) ) {
-		      std::cout<<"michael "<<ip<<" "<<apos.x()<<" "<<apos.y()<<" "<<apos.eta()<<" "<<apos.phi()<<" "<<acellid<<std::endl;
+		      //		      std::cout<<"michael "<<ip<<" "<<apos.x()<<" "<<apos.y()<<" "<<apos.eta()<<" "<<apos.phi()<<" "<<acellid<<std::endl;
 		    }
 		    }
 
@@ -799,23 +826,38 @@ int main(int argc, char** argv){//main
     const unsigned isize=5;
     double coneSize[isize]={0.1,0.2,0.3,0.4,0.5};
     double rechitsum[isize]={0.,0.,0.,0.,0.};
+    double rechitsumdead[isize]={0.,0.,0.,0.,0.};
     double rechitBHsum[isize]={0.,0.,0.,0.};
 
     double etaW=0.;
     double phiW=0.;
     double norm=0.;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
+
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       unsigned layer = lHit.layer();
-      double leta = lHit.eta();
-      double lphi = lHit.phi();
-      //if(lphi<0) lphi=2.*TMath::Pi()+lphi;
-      double lenergy=lHit.energy()*absW[layer]/1000.;
-      if (debug>20) std::cout << " -- hit " << iH << " et eta phi " << lenergy<<" "<<leta << " "<< lphi<<std::endl; 
-	//clean up rechit collection
+
+      int ip=layer-scintoffset-nscintlayer-1;
 
       const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
       isScint = subdet.isScint;
+      double leta = lHit.eta();
+      double lphi = lHit.phi();
+      double lenergy=lHit.energy()*absW[layer]/1000.;
+      TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap() : shape==2?geomConv.diamondMap() : shape==3? geomConv.triangleMap(): geomConv.hexagonMap();
+      unsigned cellid = 0;
+      ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
+      if (isScint){
+	double aaaphi = pos.phi();
+	if(aaaphi<0) aaaphi+=2.*TMath::Pi();
+	cellid = map->FindBin(pos.eta(),aaaphi);
+	//cellid = map->FindBin(pos.eta(),pos.phi());
+      } else {
+	cellid = map->FindBin(lHit.get_x(),lHit.get_y());
+      }
+
+      if (debug>20) std::cout << " -- hit " << iH << " et eta phi " << lenergy<<" "<<leta << " "<< lphi<<std::endl; 
+	//clean up rechit collection
 
       norm+=lenergy;
       etaW+=leta*lenergy;
@@ -827,7 +869,22 @@ int main(int argc, char** argv){//main
       for(unsigned ii(0);ii<isize;ii++) {
 	if(dR<coneSize[ii]) {
 	  rechitsum[ii]+=lenergy;
-	  if(isScint) rechitBHsum[ii]+=lenergy;
+	 
+	  if(isScint) {
+	    rechitBHsum[ii]+=lenergy;
+	    std::pair<unsigned,unsigned> temp(ip,cellid);
+	    std::set<std::pair<unsigned,unsigned>>::iterator ibc=deadlist.find(temp);
+	    //std::cout<<"michael "<<temp.first<<" "<<temp.second<<std::endl;
+	    //std::cout<<" I am here"<<std::endl;
+	    //if(ibc!=deadlist.end()) std::cout<<" found on dead list"<<std::endl;
+	    if(ibc==deadlist.end()) {
+	      rechitsumdead[ii]+=lenergy;
+	    }
+	    
+	  } else {
+	    rechitsumdead[ii]+=lenergy;
+	  }
+	  
 	}
       }
 
@@ -840,8 +897,11 @@ int main(int argc, char** argv){//main
 
     h_Egenreco->Fill(Egen,rechitsum[3]/Egen);
     h_egenreco->Fill(rechitsum[3]/Egen);
-    if(phigen>0) h_egenrecopphi->Fill(rechitsum[3]/Egen);
-    else h_egenrecomphi->Fill(rechitsum[3]/Egen);
+    if(phigen>0) {
+      h_egenrecopphi->Fill(rechitsum[3]/Egen);
+      h_egenrecopphidead->Fill(rechitsumdead[3]/Egen);
+    }
+    else {h_egenrecomphi->Fill(rechitsum[3]/Egen);}
     h_EpPhi->Fill(phigen,rechitsum[3]/Egen);
     for(unsigned ii(0);ii<isize;ii++) {
       h_EpCone->Fill(coneSize[ii],rechitsum[ii]/Egen);
