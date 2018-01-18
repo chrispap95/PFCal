@@ -51,6 +51,9 @@
 using boost::lexical_cast;
 namespace po=boost::program_options;
 
+bool domap = true;
+
+
 void SNAPrec_rl(TH2F* h_1,std::vector<HGCSSRecoHit> *rechitvec) {
   std::cout<<"SNAP"<<std::endl;
   double ymax = h_1->GetYaxis()->GetXmax();
@@ -120,6 +123,22 @@ double DeltaR(double eta1,double phi1,double eta2,double phi2){
 
 
 int main(int argc, char** argv){//main  
+
+
+
+  ///////////////////////////////////////////////////////////////
+  // initialize some variables
+  ///////////////////////////////////////////////////////////////
+
+
+  const unsigned nscintlayer=16;
+  const unsigned scintoffset=36;
+
+  bool ipfirst[nscintlayer];
+  for(int i(0);i<nscintlayer;i++) {ipfirst[i]=true;}
+
+  unsigned scintminid[nscintlayer]={145,179,219,206,159,205,274,284,28,223,47,24,219,1,188,211};
+  unsigned scintmaxid[nscintlayer]={32545,32579,32619,32606,20823,20869,20938,20948,20692,20887,20711,20688,20883,20665,20852,20875};
 
 
   //Input output and config options
@@ -353,24 +372,48 @@ int main(int argc, char** argv){//main
   TH2F* h_zl = new TH2F("h_zl","z vs l of hit",5000,4300.,5200,25,30.,55.);
 
 
-  TH2F *h_sxy[16]; // last 16 layers, scint part
-  TH2F *h_nsxy[16];  // last 16 layers, not scint part
-  TH2F *h_scellid[16];
-  for(unsigned ii(0);ii<16;ii++) {
+  TH2F *h_sxy[nscintlayer]; // last 16 layers, scint part
+  TH2F *h_nsxy[nscintlayer];  // last 16 layers, not scint part
+  TH2F *h_scellid[nscintlayer];
+  TH2F *h_scellidxy[nscintlayer];
+  TH2F *h_scellidxyzoom[nscintlayer];
+  TH2F *h_scellideta[nscintlayer];
+  TH2F *h_scellidphi[nscintlayer];
+  for(unsigned ii(0);ii<nscintlayer;ii++) {
     std::ostringstream label;
     label.str("");
-    label<<"xy of hit scint "<<ii+36;
+    label<<"xy of hit scint "<<ii+scintoffset;
     h_sxy[ii]=new TH2F(label.str().c_str(),"xy of hit scint",2500,-2500.,2500.,2500,-2500.,2500.);
     std::ostringstream label2;
     label2.str("");
-    label2<<"xy of hit not scint "<<ii+36;
+    label2<<"xy of hit not scint "<<ii+scintoffset;
     h_nsxy[ii]=new TH2F(label2.str().c_str(),"xy of hit not scint",
         2500,-2500.,2500.,2500,-2500.,2500.);
     std::ostringstream label3;
     label3.str("");
-    label3<<"cellidscint"<<ii+36;
+    label3<<"cellidscint"<<ii+scintoffset;
     h_scellid[ii]=new TH2F(label3.str().c_str(),"cellid scint",
-			2500,-3.2,6.4,2500,1.3,3.5);
+			   2500,-3.2,3.2,2500,1.3,4.0);  // temp phi pos to Anne-Marie fixes cell geo problem
+    std::ostringstream label4;
+    label4.str("");
+    label4<<"cellidscinteta"<<ii+scintoffset;
+    h_scellideta[ii]=new TH2F(label4.str().c_str(),"cellid scint",
+			   2500,1.3,3.5,13500,0,13500);
+    std::ostringstream label5;
+    label5.str("");
+    label5<<"cellidscintphi"<<ii+scintoffset;
+    h_scellidphi[ii]=new TH2F(label5.str().c_str(),"cellid scint",
+			      2500,-3.2,3.2,1000,0,2000);
+    std::ostringstream label6;
+    label6.str("");
+    label6<<"cellidxy"<<ii+scintoffset;
+    h_scellidxy[ii]=new TH2F(label6.str().c_str(),"cellid scint",
+			   6000,-3000.,3000.,6000,-3000.,3000.);  // temp phi pos to    
+    std::ostringstream label7;
+    label7.str("");
+    label7<<"cellidxyzoom"<<ii+scintoffset;
+    h_scellidxyzoom[ii]=new TH2F(label7.str().c_str(),"cellid scint",
+			   6000,-700.,700.,6000,-700.,700.);  // temp phi pos to Anne-Mar
   }
 
   TH2F* h_Egenreco = new TH2F("h_Egenreco","E reco sum versus gen",1000,0.,1000.,100,0.,20.);
@@ -401,6 +444,11 @@ int main(int argc, char** argv){//main
 
   TH2F* h_banana = new TH2F("h_banana","banana plot",1000,0.,500.,1000,0.,500.);
   TH1F* h_fracBH = new TH1F("h_fracBH","fraction in BH",100,-01.,1.1);
+
+
+  //////////////////////////////
+
+
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
@@ -443,20 +491,23 @@ int main(int argc, char** argv){//main
   unsigned nSkipped = 0;
   std::vector<double> absW;
   bool firstEvent = true;
-  unsigned ibinScintmin=4294967295;
-  unsigned ibinScintmax=0;
+  bool firstEvent2 = true;
+  unsigned ibinScintmin[nscintlayer];
+  for(int i(0);i<nscintlayer;i++) {ibinScintmin[i]=4294967295;}
+  unsigned ibinScintmax[nscintlayer];
+  for(int i(0);i<nscintlayer;i++) {ibinScintmax[i]=0;}
   unsigned badlaymin=10000;
   
-  double rmaxs[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-  double rmins[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
-  double rmaxns[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-  double rminns[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  double rmaxs[nscintlayer] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double rmins[nscintlayer]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  double rmaxns[nscintlayer] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double rminns[nscintlayer]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
 
 
-  double xmax[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-  double xmin[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
-  double ymax[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-  double ymin[16]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  double xmax[nscintlayer] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double xmin[nscintlayer]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
+  double ymax[nscintlayer] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  double ymin[nscintlayer]={5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000};
   
   int isnap=-1;
   for (unsigned ievt(0); ievt<nEvts; ++ievt){//loop on entries
@@ -537,7 +588,6 @@ int main(int argc, char** argv){//main
     double phiaxis=phigen;
 
 
-
     bool isScint = false;
     if (debug) std::cout << " - Event contains " << (*rechitvec).size() << " rechits." << std::endl;
 
@@ -545,6 +595,10 @@ int main(int argc, char** argv){//main
     unsigned iMax=-1;
     double MaxE=-1.;
     bool snap=false;
+    //double aistep=20000;
+    double aistep=400;
+    int istep=aistep;
+    double stepsize=6000/aistep;
     for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
       HGCSSRecoHit lHit = (*rechitvec)[iH];
       double xh=lHit.get_x();
@@ -556,51 +610,55 @@ int main(int argc, char** argv){//main
       double lphi = lHit.phi();
       unsigned layer = lHit.layer();
       unsigned ixx=layer;
-      if(ixx>52) ixx=ixx-17;
-      int ip=ixx-36;
+
+      if(ixx>nscintlayer+scintoffset) ixx=ixx-nscintlayer-1;
+      int ip=ixx-scintoffset;
       const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
       isScint = subdet.isScint;
-      TH2Poly *map = 
-	isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1()
-                                                : geomConv.squareMap2())
-        : shape==4?geomConv.squareMap() 
-	: shape==2?geomConv.diamondMap() 
-	: shape==3? geomConv.triangleMap()
-	: geomConv.hexagonMap();
+
+      TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap() : shape==2?geomConv.diamondMap() : shape==3? geomConv.triangleMap(): geomConv.hexagonMap();
+
       unsigned cellid = 0;
       ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
       if (isScint){
 	double aaaphi = pos.phi();
 	if(aaaphi<0) aaaphi+=2.*TMath::Pi();
 	cellid = map->FindBin(pos.eta(),aaaphi);
+	//cellid = map->FindBin(pos.eta(),pos.phi());
       } else {
 	cellid = map->FindBin(lHit.get_x(),lHit.get_y());
       }
-
-
       geomConv.fill(layer,Eh,0,cellid,zh);
+
+      if(isScint) {
+      if(firstEvent2) {
+	firstEvent2=false;
+	std::cout<<std::endl<<std::endl;
+	std::cout<<"check check layer is "<<layer<<std::endl;
+	double abceta=1.7;
+	double abcphi;
+	unsigned acellid=0;
+	for(int i(0);i<100;i++) {
+	  abcphi=(6.2/100.)*i;
+	  acellid = map->FindBin(abceta,abcphi);
+	  std::cout<<abceta<<" "<<abcphi<<" "<<acellid<<std::endl;
+	}
+	abceta=2.0;
+	for(int i(0);i<100;i++) {
+	  abcphi=(6.2/100.)*i;
+	  acellid = map->FindBin(abceta,abcphi);
+	  std::cout<<abceta<<" "<<abcphi<<" "<<acellid<<std::endl;
+	}
+      }
+      }
 
       if(Eh>MaxE) {MaxE=Eh; iMax=iH;}
       if (debug>20) std::cout << " -- hit " << iH << " eta " << leta << std::endl; 
 
       h_cellid->Fill(cellid);
-      if(isScint) {
-	if(cellid<4000000000) { // temp fix until Anne-Marie fixes the geometry problem
-	if(cellid>ibinScintmax) ibinScintmax=cellid;
-	if(cellid<ibinScintmin) ibinScintmin=cellid;
-	}
-	//std::cout<<" haha "<<cellid<<" "<<ibinScintmin<<" "<<ibinScintmax<<std::endl;
-      }
+
+      
       h_cellidz->Fill(zh,cellid);
-      if(isScint) {
-	if(cellid<100000) {
-	  h_cellidzs->Fill(zh,cellid);
-	  h_cellidphis->Fill(pos.phi(),cellid);
-	  h_cellidetas->Fill(pos.eta(),cellid);
-	} else {
-	  h_cellidphibs->Fill(pos.phi(),10000);
-	}
-      }
 
       h_energy->Fill(Eh);
       h_z->Fill(zh);
@@ -615,20 +673,19 @@ int main(int argc, char** argv){//main
       h_etaphi->Fill(leta,lphi);
 
 
-
-      if(ip>=0) {
-	if(xh>5000) {
+      if(ip>=0) { // look at layers with scintillator
+	if(xh>5000) {  // weird hits
 	  std::cout<<"large x-hit "<<xh<<" y-hit z-hit layer energy are "<<yh<<" "<<zh<<" "<<layer<<" "<<Eh<<std::endl;
 	  if(layer<badlaymin) badlaymin=layer;
 	  if(!snap) {
-	  if(isnap<nsnap-1) {
-	    snap=true;
-	    isnap+=1;
-	    std::cout<<" isnap is "<<isnap<<std::endl;
-	    SNAPrec_rl(h_snaprl[isnap],rechitvec);
-	    SNAPrec_rz(h_snaprz[isnap],rechitvec);
-	    SNAPsim(h_snaps[isnap],simhitvec,myDetector,geomConv,shape);
-	  }
+	    if(isnap<nsnap-1) {
+	      snap=true;
+	      isnap+=1;
+	      std::cout<<" isnap is "<<isnap<<std::endl;
+	      SNAPrec_rl(h_snaprl[isnap],rechitvec);
+	      SNAPrec_rz(h_snaprz[isnap],rechitvec);
+	      SNAPsim(h_snaps[isnap],simhitvec,myDetector,geomConv,shape);
+	    }
 	  }
 	  double rr=zh*tan(thetagen);
 	  double xx=rr*cos(phigen);
@@ -636,36 +693,88 @@ int main(int argc, char** argv){//main
 	  h_phibad->Fill(phigen);
 	  h_xbad->Fill(xx);
 	  h_ybad->Fill(yy);
-	} else {
+	} else {  //normal his
 	  
 	  h_xrgood->Fill(rh,xh);
 	  h_yrgood->Fill(rh,yh);
 	}
 	if(cellid<4000000000) {  // temp fix until Anne-Marie fixes cell geo problem
-	if(xh<xmin[ip]) {xmin[ip]=xh;}
-        if(xh>xmax[ip]) {xmax[ip]=xh;}
-        if(yh<ymin[ip]) {ymin[ip]=yh;}
-        if(yh>ymax[ip]) {ymax[ip]=yh;}
+	  if(xh<xmin[ip]) {xmin[ip]=xh;}
+          if(xh>xmax[ip]) {xmax[ip]=xh;}
+	  if(yh<ymin[ip]) {ymin[ip]=yh;}
+	  if(yh>ymax[ip]) {ymax[ip]=yh;}
 
-	if(isScint) {
+	  if(isScint) {
 	  //	  std::cout<<"ip rh is "<<ip<<" "<<rh<<std::endl;
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
-	  h_sxy[ip]->Fill(xh,yh);
-	  double abc=h_scellid[ip]->GetBinContent(pos.phi(),pos.eta());
-	  if(abc<0.5) h_scellid[ip]->Fill(pos.phi(),pos.eta(),cellid);
-	  if(rh<rmins[ip]) {rmins[ip]=rh;}
-	  if(rh>rmaxs[ip]) {rmaxs[ip]=rh;}
+	    h_sxy[ip]->Fill(xh,yh);
+
+	    h_cellidzs->Fill(zh,cellid);
+	    h_cellidphis->Fill(pos.phi(),cellid);
+	    h_cellidetas->Fill(pos.eta(),cellid);
+	    if(domap) {
+	    if(ipfirst[ip]) {
+	      ipfirst[ip]=false;
+	      std::cout<<"doing ip "<<ip<<std::endl;
+	      for(int iia(0);iia<istep;iia++) {
+		for(int iib(0);iib<istep;iib++) {
+		  //double xxa=-3000.+stepsize*iia;
+		  //double yya=-3000.+stepsize*iib;
+		  double etaa=1.2+((4.-1.2)/aistep)*iia;
+		  double phia=-3.14+((6.4)/aistep)*iib;
+		  double thetaa=2.*atan(exp(-etaa));
+		  double ra=lHit.get_z()*tan(thetaa);
+		  double xxa=ra*cos(phia);
+		  double yya=ra*sin(phia);
+		  ROOT::Math::XYZPoint apos = ROOT::Math::XYZPoint(xxa,yya,lHit.get_z());
+		  //double bbbphi = phia;
+		  double bbbphi=apos.phi();
+		  if(bbbphi<0) bbbphi+=2.*TMath::Pi();
+		  //unsigned acellid = map->FindBin(etaa,bbbphi);
+		  unsigned acellid = map->FindBin(apos.eta(),bbbphi);
+		  //unsigned acellid = map->FindBin(apos.eta(),apos.phi());
+		  if(acellid<4000000000) {
+		    if((apos.x()<-500)&&(apos.y()<-500) ) {
+		    if((apos.x()>-600)&&(apos.y()>-600) ) {
+		      std::cout<<"michael "<<ip<<" "<<apos.x()<<" "<<apos.y()<<" "<<apos.eta()<<" "<<apos.phi()<<" "<<acellid<<std::endl;
+		    }
+		    }
+		    if((apos.x()>500)&&(apos.y()>500) ) {
+		    if((apos.x()<600)&&(apos.y()<600) ) {
+		      std::cout<<"michael "<<ip<<" "<<apos.x()<<" "<<apos.y()<<" "<<apos.eta()<<" "<<apos.phi()<<" "<<acellid<<std::endl;
+		    }
+		    }
+
+		    double abc=h_scellid[ip]->GetBinContent(apos.phi(),apos.eta());
+		    if(abc<0.5) h_scellid[ip]->Fill(apos.phi(),apos.eta(),acellid);
+		    abc=h_scellidxy[ip]->GetBinContent(apos.x(),apos.y());
+		    if(abc<0.5) h_scellidxy[ip]->Fill(apos.x(),apos.y(),acellid);
+		    abc=h_scellidxyzoom[ip]->GetBinContent(apos.x(),apos.y());
+		    if(abc<0.5) h_scellidxyzoom[ip]->Fill(apos.x(),apos.y(),acellid);
+		    h_scellideta[ip]->Fill(apos.eta(),acellid);
+		    h_scellidphi[ip]->Fill(apos.phi(),acellid);
+
+	if(acellid>ibinScintmax[ip]) ibinScintmax[ip]=acellid;
+	if(acellid<ibinScintmin[ip]) ibinScintmin[ip]=acellid;
+
+		  }
+		}
+	      }
+	    }
+	    }
+
+	    if(rh<rmins[ip]) {rmins[ip]=rh;}
+	    if(rh>rmaxs[ip]) {rmaxs[ip]=rh;}
 	  //std::cout<<rmins[ip]<<" "<<rmaxs[ip]<<std::endl;
-	} else {
-	  h_nsxy[ip]->Fill(xh,yh);
-	  if(rh<rminns[ip]) {rminns[ip]=rh;}
-	  if(rh>rmaxns[ip]) {rmaxns[ip]=rh;}
-	}
-	}
-      }
 
-
-    }//loop on hits
+	  } else {  // end if scint
+	    h_nsxy[ip]->Fill(xh,yh);
+	    if(rh<rminns[ip]) {rminns[ip]=rh;}
+	    if(rh>rmaxns[ip]) {rmaxns[ip]=rh;}
+	  }
+	}  // end temp fix
+      }  // end loooking at layers with scipt (ip>0)
+    }  // end loop over hits
 
 
 
@@ -819,18 +928,21 @@ int main(int argc, char** argv){//main
   }//loop on entries
 
     if(debug) {
-      std::cout<<std::endl<<std::endl<<" min max dif scint cell is are "<<ibinScintmin<<" "<<ibinScintmax<<" "<<ibinScintmax-ibinScintmin<<std::endl;
+      std::cout<<std::endl<<std::endl;
+      for(int i(0);i<nscintlayer;i++) {
+	std::cout<<" min max scint cellid layer "<<i<<"  are "<<ibinScintmin[i]<<" "<<ibinScintmax[i]<<" "<<std::endl;
+      }
       std::cout<<std::endl<<std::endl<<"rmin max for layer"<<std::endl;;
-      for(unsigned ii(0);ii<16;ii++){
-	std::cout<<"   "<<ii+36<<" "<<rminns[ii]<<" "<<rmaxns[ii]<<" "<<rmins[ii]<<" "<<rmaxs[ii]<<std::endl;
+      for(unsigned ii(0);ii<nscintlayer;ii++){
+	std::cout<<"   "<<ii+scintoffset<<" "<<rminns[ii]<<" "<<rmaxns[ii]<<" "<<rmins[ii]<<" "<<rmaxs[ii]<<std::endl;
       }
       std::cout<<std::endl<<std::endl<<"xmin max for layer"<<std::endl;;
-      for(unsigned ii(0);ii<16;ii++){
-	std::cout<<"   "<<ii+36<<" "<<xmin[ii]<<" "<<xmax[ii]<<std::endl;
+      for(unsigned ii(0);ii<nscintlayer;ii++){
+	std::cout<<"   "<<ii+scintoffset<<" "<<xmin[ii]<<" "<<xmax[ii]<<std::endl;
       }
       std::cout<<std::endl<<std::endl<<"ymin max for layer"<<std::endl;;
-      for(unsigned ii(0);ii<16;ii++){
-	std::cout<<"   "<<ii+36<<" "<<ymin[ii]<<" "<<ymax[ii]<<std::endl;
+      for(unsigned ii(0);ii<nscintlayer;ii++){
+	std::cout<<"   "<<ii+scintoffset<<" "<<ymin[ii]<<" "<<ymax[ii]<<std::endl;
       }
     }
 
