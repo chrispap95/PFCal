@@ -469,13 +469,15 @@ int main(int argc, char** argv){//main
     ld=lRndm.Integer(nscintlayer);
     range=scintmaxid[ld]-scintminid[ld];
     cd=scintminid[ld]+(lRndm.Integer(range));
-    std::cout<<ld<<" "<<cd<<std::endl;
+    //std::cout<<ld<<" "<<cd<<std::endl;
     deadlist.insert(std::make_pair(ld,cd));    
   }
+  /*
   std::cout<<" dead list is "<<std::endl;
   for(auto itr=deadlist.begin();itr!=deadlist.end();itr++ ) {
     std::cout<<(*itr).first<<" "<<(*itr).second<<std::endl;
   }
+  */
   
   ///////////////////////////////////////////////////////
   //////////////////  start event loop
