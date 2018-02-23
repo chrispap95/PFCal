@@ -39,7 +39,7 @@ int main(int argc,char** argv)
 
   // Set mandatory initialization classes
   //int version=DetectorConstruction::v_HGCAL_2016TB;
-  int version=63;
+  int version=64;
   //int version=DetectorConstruction::v_HGCALEE_TB;
   int model=DetectorConstruction::m_FULLSECTION;
   //int model=DetectorConstruction::m_BOXWITHCRACK_100;
@@ -111,7 +111,6 @@ int main(int argc,char** argv)
 #ifdef G4UI_USE
       G4UIExecutive* ui = new G4UIExecutive(argc, argv);
 #ifdef G4VIS_USE
-      std::cout<<"will robinson"<<std::endl;
       UImanager->ApplyCommand("/control/execute vis.mac"); 
 #endif
       if (ui->IsGUI())

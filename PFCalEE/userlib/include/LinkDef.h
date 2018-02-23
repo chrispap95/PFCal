@@ -14,5 +14,3 @@
 #pragma link C++ class vector<HGCSSCluster>+;
 #pragma link C++ class HGCSSMipHit+;
 #pragma link C++ class vector<HGCSSMipHit>+;
-#pragma link C++ class HGCSSSimpleHit+;
-#pragma link C++ class vector<HGCSSSimpleHit>+;

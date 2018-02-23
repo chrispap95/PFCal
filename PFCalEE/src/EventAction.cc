@@ -48,8 +48,8 @@ EventAction::EventAction()
   //square map for FHCAL Scint + BH Scint
   double etamin = ((DetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction())->GetMinEta();
   double etamax = ((DetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction())->GetMaxEta();
-  geomConv_->initialiseSquareMap1(etamin,etamax,0,2*TMath::Pi(),0.01745);//eta phi segmentation
-  geomConv_->initialiseSquareMap2(etamin,etamax,0,2*TMath::Pi(),0.02182);//eta phi segmentation
+  geomConv_->initialiseSquareMap1(etamin,etamax,-1.*TMath::Pi(),TMath::Pi(),0.01745);//eta phi segmentation
+  geomConv_->initialiseSquareMap2(etamin,etamax,-1.*TMath::Pi(),TMath::Pi(),0.02182);//eta phi segmentation
   
 
   tree_=new TTree("HGCSSTree","HGC Standalone simulation tree");

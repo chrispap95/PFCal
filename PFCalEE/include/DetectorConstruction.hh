@@ -71,6 +71,7 @@ public:
     v_HGCALHE_v8=61,
     v_HGCALBE_v8=62,
     v_HGCAL_v8=63,
+    v_HGCAL_v8_ups=64,
     v_HGCALEE_TB=100,
     v_HGCALEE_TB_gap0=101,
     v_HGCALEE_TB_allW=102,
@@ -90,8 +91,8 @@ public:
   /**
      @short CTOR
    */
-  DetectorConstruction(G4int ver=DetectorConstruction::v_CALICE, 
-		       G4int mod=DetectorConstruction::m_SIMPLE_20,
+  DetectorConstruction(G4int ver=DetectorConstruction::v_HGCAL_v8_ups, 
+		       G4int mod=DetectorConstruction::m_FULLSECTION,
 		       G4int shape=1,
 		       std::string absThickW="1.75,1.75,1.75,1.75,1.75,2.8,2.8,2.8,2.8,2.8,4.2,4.2,4.2,4.2,4.2",
 		       std::string absThickPb="1,1,1,1,1,2.1,2.1,2.1,2.1,2.1,4.4,4.4,4.4,4.4",
@@ -100,6 +101,7 @@ public:
   void buildHGCALFHE(const unsigned aVersion);
   void buildHGCALBHE(const unsigned aVersion);
   void buildHF();
+  void buildUPS(G4LogicalVolume* hall);
   /**
      @short calorimeter structure (sampling sections)
    */
@@ -184,6 +186,11 @@ private:
   std::vector<G4double> absThickW_;
   std::vector<G4double> absThickPb_;
   std::vector<G4bool> dropLayer_;
+
+  bool doUPS_;
+  G4double m_UPS_z0;
+  
+
 
   double getEtaFromRZ(const double & r, const double & z);
 

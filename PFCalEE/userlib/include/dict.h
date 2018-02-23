@@ -40,7 +40,6 @@ extern void G__set_cpp_environmentdict();
 #include "HGCSSRecoJet.hh"
 #include "HGCSSCluster.hh"
 #include "HGCSSMipHit.hh"
-#include "HGCSSSimpleHit.hh"
 #include <algorithm>
 namespace std { }
 using namespace std;
@@ -129,10 +128,6 @@ extern G__linked_taginfo G__dictLN_HGCSSMipHit;
 extern G__linked_taginfo G__dictLN_vectorlEHGCSSMipHitcOallocatorlEHGCSSMipHitgRsPgR;
 extern G__linked_taginfo G__dictLN_vectorlEHGCSSMipHitcOallocatorlEHGCSSMipHitgRsPgRcLcLiterator;
 extern G__linked_taginfo G__dictLN_reverse_iteratorlEvectorlEHGCSSMipHitcOallocatorlEHGCSSMipHitgRsPgRcLcLiteratorgR;
-extern G__linked_taginfo G__dictLN_HGCSSSimpleHit;
-extern G__linked_taginfo G__dictLN_vectorlEHGCSSSimpleHitcOallocatorlEHGCSSSimpleHitgRsPgR;
-extern G__linked_taginfo G__dictLN_vectorlEHGCSSSimpleHitcOallocatorlEHGCSSSimpleHitgRsPgRcLcLiterator;
-extern G__linked_taginfo G__dictLN_reverse_iteratorlEvectorlEHGCSSSimpleHitcOallocatorlEHGCSSSimpleHitgRsPgRcLcLiteratorgR;
 
 /* STUB derived class for protected member access */
 typedef vector<HGCSSSamplingSection,allocator<HGCSSSamplingSection> > G__vectorlEHGCSSSamplingSectioncOallocatorlEHGCSSSamplingSectiongRsPgR;
@@ -142,4 +137,3 @@ typedef vector<HGCSSRecoHit,allocator<HGCSSRecoHit> > G__vectorlEHGCSSRecoHitcOa
 typedef vector<HGCSSRecoJet,allocator<HGCSSRecoJet> > G__vectorlEHGCSSRecoJetcOallocatorlEHGCSSRecoJetgRsPgR;
 typedef vector<HGCSSCluster,allocator<HGCSSCluster> > G__vectorlEHGCSSClustercOallocatorlEHGCSSClustergRsPgR;
 typedef vector<HGCSSMipHit,allocator<HGCSSMipHit> > G__vectorlEHGCSSMipHitcOallocatorlEHGCSSMipHitgRsPgR;
-typedef vector<HGCSSSimpleHit,allocator<HGCSSSimpleHit> > G__vectorlEHGCSSSimpleHitcOallocatorlEHGCSSSimpleHitgRsPgR;

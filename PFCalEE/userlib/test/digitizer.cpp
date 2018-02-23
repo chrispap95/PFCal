@@ -200,6 +200,8 @@ void processHist(const unsigned iL,
 		 std::vector<PseudoJet> & lParticles
 		 ){
 
+
+
   bool doSaturation=false;//true;
 
   DetectorEnum adet = subdet.type;
@@ -211,6 +213,7 @@ void processHist(const unsigned iL,
     //bin numbering starts at 1....
     //get bin number of map element iele
     unsigned iB = lIter->first;
+    if(iB>4000000000) continue;
     std::pair<double,double> xy = geom[iB];
     if (isScint) HGCSSGeometryConversion::convertFromEtaPhi(xy,meanZpos);
     double digiE = 0;
@@ -272,6 +275,10 @@ void processHist(const unsigned iL,
       {//save hits
 	//double calibE = myDigitiser.MIPtoGeV(subdet,digiE);
 	HGCSSRecoHit lRecHit;
+	if(isScint) {
+	  std::cout<<"x y z il iB simE "<<xy.first<<" "<<xy.second<<" "<<iL<<" "<<iB<<" "<<simE<<std::endl;
+	  if(fabs(xy.first)>100000.) std::cout<<"Burnham weird "<<std::endl;
+	}
 	lRecHit.layer(iL);
 	lRecHit.energy(digiE);
 	lRecHit.adcCounts(adc);
@@ -361,6 +368,8 @@ int main(int argc, char** argv){//main
 	    << " -- pu file path: " << puPath << std::endl
     ;
 
+  std::cout<<"Michael Burnham starting"<<std::endl;
+
   double etamean;
   double deta;
   bool doEtaSel = false;
@@ -386,6 +395,7 @@ int main(int argc, char** argv){//main
     debug = atoi(argv[nReqA+3]);
     std::cout << " -- DEBUG output is set to " << debug << std::endl;
   }
+  debug=1;
   if (nPar > nReqA+4) std::istringstream(argv[nReqA+4])>>pSaveDigis;
   if (nPar > nReqA+5) std::istringstream(argv[nReqA+5])>>pSaveSims;
   if (nPar > nReqA+6) std::istringstream(argv[nReqA+6])>>pMakeJets;
@@ -550,8 +560,8 @@ int main(int argc, char** argv){//main
   else if (shape==4) geomConv.initialiseSquareMap(calorSizeXY,10.);
 
   //square map for BHCAL
-  geomConv.initialiseSquareMap1(1.4,3.0,0,2*TMath::Pi(),0.01745);//eta phi segmentation
-  geomConv.initialiseSquareMap2(1.4,3.0,0,2*TMath::Pi(),0.02182);//eta phi segmentation
+  geomConv.initialiseSquareMap1(1.4,3.0,-1.*TMath::Pi(),TMath::Pi(),0.01745);//eta phi segmentation
+  geomConv.initialiseSquareMap2(1.4,3.0,-1.*TMath::Pi(),TMath::Pi(),0.02182);//eta phi segmentation
   //geomConv.initialiseSquareMap2(1.4,3.0,0,2*TMath::Pi(),0.02618);//eta phi segmentation
 
   HGCSSDigitisation myDigitiser;
@@ -674,12 +684,15 @@ int main(int argc, char** argv){//main
     }
     else if (ievt%50 == 0) std::cout << "... Processing event: " << ievt << std::endl;
     
-
+    std::cout<<"Michael Burnham starting look over hitvec "<<(*hitvec).size()<<std::endl;
     for (unsigned iH(0); iH<(*hitvec).size(); ++iH){//loop on hits
       HGCSSSimHit lHit = (*hitvec)[iH];
       if (lHit.energy()<=0) continue;
       
       //do not save hits with 0 energy...
+      if(lHit.cellid()>1000000) {
+	std::cout<<"Michael Burnham"<<std::endl;
+      }
       if (lHit.energy()>0 && pSaveSims) lSimHits.push_back(lHit);
       
       unsigned layer = lHit.layer();
@@ -690,6 +703,9 @@ int main(int argc, char** argv){//main
       if (doEtaSel){
 	bool passeta = fabs(lHit.eta(subdet,geomConv,shape)-etamean)<deta;
 	if (!passeta) continue;
+      }
+      if(lHit.cellid()>1000000) {
+	std::cout<<"Burnham cell id is "<<lHit.cellid()<<std::endl;
       }
 
       std::pair<double,double> xy = lHit.get_xy(subdet,geomConv,shape);
@@ -754,7 +770,11 @@ int main(int argc, char** argv){//main
 	    bool passeta = fabs(lHit.eta(subdet,geomConv,shape)-etamean)<deta;
 	    if (!passeta) continue;
 	  }
+      if(lHit.cellid()>1000000) {
+	std::cout<<"Burnham 2 cell id is "<<lHit.cellid()<<std::endl;
+      }
 	  
+
 	  std::pair<double,double> xy = lHit.get_xy(subdet,geomConv,shape);
 	  double posx = xy.first;//lHit.get_x(cellSize);
 	  double posy = xy.second;//lHit.get_y(cellSize);
@@ -781,9 +801,9 @@ int main(int argc, char** argv){//main
       }//loop on interactions
     }//add PU
 
-    if (debug>0) {
-      std::cout << " **DEBUG** simhits = " << (*hitvec).size() << " " << lSimHits.size() << std::endl;
-    }
+    //if (debug>0) {
+      std::cout << "Burnham **DEBUG** simhits = " << (*hitvec).size() << " " << lSimHits.size() << std::endl;
+      //}
 
     //create hits, everywhere to have also pure noise
     //digitise
@@ -810,6 +830,15 @@ int main(int argc, char** argv){//main
       double etaBoundary = myDetector.etaBoundary(iL);
       //extend map to include all cells in eta=1.4-3 region
       //in eta ring if saving only one eta ring....
+
+      std::map<unsigned,MergeCells>::iterator scelIter3 = histE.begin();
+      for (; scelIter3!=histE.end();++scelIter3){//loop on elements of the map
+
+	unsigned iB = scelIter3->first;
+	if(iB>4000000000) std::cout<<"Cpt Kirk 3"<<std::endl;
+      }
+
+
       for (unsigned iB(1); iB<nBins+1;++iB){
 	std::pair<double,double> xy = geom[iB];
 	if (isScint) {
@@ -824,11 +853,25 @@ int main(int argc, char** argv){//main
 	  else passeta = eta>etaBoundary && eta<3.0;
 	}
 	if (!passeta) continue;
+
+
 	MergeCells tmpCell;
 	tmpCell.energy = 0;
 	tmpCell.time = 0;
+	if(iB>4000000000) {
+	  std::cout<<"will robinson weird"<<std::endl;
+	}
 	histE.insert(std::pair<unsigned,MergeCells>(iB,tmpCell));
       }
+
+
+      std::map<unsigned,MergeCells>::iterator scelIter = histE.begin();
+      for (; scelIter!=histE.end();++scelIter){//loop on elements of the map
+
+	unsigned iB = scelIter->first;
+	if(iB>4000000000) std::cout<<"Cpt Kirk"<<std::endl;
+      }
+
 
       //std::cout << iL << " " << meanZpos << " map size " << histE.size() << std::endl;
 
@@ -847,6 +890,14 @@ int main(int argc, char** argv){//main
       }
 
       //processHist(iL,histE,myDigitiser,p_noise,histZ,meanZpos,isTBsetup,subdet,pThreshInADC,pSaveDigis,lDigiHits,lRecoHits,pMakeJets,lParticles);
+
+      std::map<unsigned,MergeCells>::iterator scelIter2 = histE.begin();
+      for (; scelIter2!=histE.end();++scelIter2){//loop on elements of the map
+
+	unsigned iB = scelIter2->first;
+	if(iB>4000000000) std::cout<<"Cpt Kirk 2"<<std::endl;
+      }
+
 
       processHist(iL,histE,geom,myDigitiser,p_noise,meanZpos,isTBsetup,subdet,pThreshInADC,pSaveDigis,lDigiHits,lRecoHits,pMakeJets,lParticles);
  

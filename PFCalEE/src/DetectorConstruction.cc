@@ -39,6 +39,12 @@ DetectorConstruction::DetectorConstruction(G4int ver, G4int mod,
 {
 
   doHF_ = false;
+  doUPS_ = false;
+  if(version_== v_HGCAL_v8_ups) {
+    doUPS_=true;
+    m_UPS_z0=50;
+    std::cout<<" putting mockup of tracker material in front of calorimeter"<<std::endl;
+  }
   firstHFlayer_ = 9999;
   firstMixedlayer_ = 9999;
   firstScintlayer_ = 9999;
@@ -324,7 +330,7 @@ DetectorConstruction::DetectorConstruction(G4int ver, G4int mod,
 	break;
       }
 
-    case v_HGCALEE_v8: case v_HGCAL_v8:
+    case v_HGCALEE_v8: case v_HGCAL_v8: case v_HGCAL_v8_ups:
       {
 
 	G4cout << "[DetectorConstruction] starting v_HGCAL(EE)_v8"<< G4endl;
@@ -1021,6 +1027,21 @@ void DetectorConstruction::buildHGCALBHE(const unsigned aVersion){
   }
 }
 
+void DetectorConstruction::buildUPS(G4LogicalVolume* hall) { 
+  std::cout<<"building material upstream of calorimeter"<<std::endl;
+
+  G4VSolid *solid;
+  solid = new G4Tubs("hahaha",10,1000,500,0.,2.*pi);
+  G4LogicalVolume *logi = new G4LogicalVolume(solid,m_materials["Si"],"hahahalog");
+  G4PVPlacement *tmp = new G4PVPlacement(0,G4ThreeVector(0.,0.,500.),logi,"hahahaphys",hall,false, 0);
+  G4VisAttributes *cat = new G4VisAttributes(G4Colour::White);
+  cat->SetVisibility(true);
+  cat->SetForceSolid(true);
+  logi->SetVisAttributes(cat);
+
+  return;
+}
+
 void DetectorConstruction::buildHF(){
   firstHFlayer_ = m_caloStruct.size();
   G4double airThick = 4*mm;
@@ -1345,6 +1366,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     buildSectorStack(iS,minL,m_sectorWidth-m_interSectorWidth);
     if (m_nSectors>1) fillInterSectorSpace(iS,minL+m_sectorWidth-m_interSectorWidth,m_interSectorWidth);
   }
+  if(doUPS_) {
+    buildUPS(experimentalHall_log);
+  }
+
+
+
   // Visualization attributes
   //
   m_logicWorld->SetVisAttributes(G4VisAttributes::Invisible);

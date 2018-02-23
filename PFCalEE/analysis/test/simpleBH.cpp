@@ -1,3 +1,4 @@
+//
 #include<string>
 #include<iostream>
 #include<fstream>
@@ -36,7 +37,7 @@
 #include "HGCSSDetector.hh"
 #include "HGCSSGeometryConversion.hh"
 #include "HGCSSPUenergy.hh"
-#include "HGCSSSimpleHit.hh"
+//#include "HGCSSSimpleHit.hh"
 
 #include "PositionFit.hh"
 #include "SignalRegion.hh"
@@ -311,8 +312,8 @@ int main(int argc, char** argv){//main
   else if (shape==4) geomConv.initialiseSquareMap(calorSizeXY,10.);
 
   //square map for BHCAL
-  geomConv.initialiseSquareMap1(1.4,3.0,0,2*TMath::Pi(),0.01745);//eta phi segmentation
-  geomConv.initialiseSquareMap2(1.4,3.0,0,2*TMath::Pi(),0.02182);//eta phi segmentation
+  geomConv.initialiseSquareMap1(1.4,3.0,-1.*TMath::Pi(),TMath::Pi(),0.01745);//eta phi segmentation
+  geomConv.initialiseSquareMap2(1.4,3.0,-1.*TMath::Pi(),TMath::Pi(),0.02182);//eta phi segmentation
   std::vector<unsigned> granularity;
   granularity.resize(myDetector.nLayers(),1);
   geomConv.setGranularity(granularity);
@@ -445,6 +446,8 @@ int main(int argc, char** argv){//main
 
   TH2F* h_banana = new TH2F("h_banana","banana plot",1000,0.,500.,1000,0.,500.);
   TH1F* h_fracBH = new TH1F("h_fracBH","fraction in BH",100,-01.,1.1);
+
+  TH1F* h_eWeirdSim = new TH1F("h_eWeirdSim","energy of sim hits with invalid cell id",100,0.,100.);
 
 
   //////////////////////////////
@@ -651,7 +654,7 @@ int main(int argc, char** argv){//main
       ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
       if (isScint){
 	double aaaphi = pos.phi();
-	if(aaaphi<0) aaaphi+=2.*TMath::Pi();
+	//if(aaaphi<0) aaaphi+=2.*TMath::Pi();
 	cellid = map->FindBin(pos.eta(),aaaphi);
 	//cellid = map->FindBin(pos.eta(),pos.phi());
       } else {
@@ -704,7 +707,7 @@ int main(int argc, char** argv){//main
 
       if(ip>=0) { // look at layers with scintillator
 	if(xh>5000) {  // weird hits
-	  if(debug>5) std::cout<<"large x-hit "<<xh<<" y-hit z-hit layer energy are "<<yh<<" "<<zh<<" "<<layer<<" "<<Eh<<std::endl;
+	  if(debug>5) std::cout<<"large x rechit "<<xh<<" y-hit z-hit layer energy cellis are "<<yh<<" "<<zh<<" "<<layer<<" "<<Eh<<" "<<cellid<<std::endl;
 	  if(layer<badlaymin) badlaymin=layer;
 	  if(!snap) {
 	    if(isnap<nsnap-1) {
@@ -758,7 +761,7 @@ int main(int argc, char** argv){//main
 		  ROOT::Math::XYZPoint apos = ROOT::Math::XYZPoint(xxa,yya,lHit.get_z());
 		  //double bbbphi = phia;
 		  double bbbphi=apos.phi();
-		  if(bbbphi<0) bbbphi+=2.*TMath::Pi();
+		  //if(bbbphi<0) bbbphi+=2.*TMath::Pi();
 		  //unsigned acellid = map->FindBin(etaa,bbbphi);
 		  unsigned acellid = map->FindBin(apos.eta(),bbbphi);
 		  //unsigned acellid = map->FindBin(apos.eta(),apos.phi());
@@ -851,7 +854,7 @@ int main(int argc, char** argv){//main
       ROOT::Math::XYZPoint pos = ROOT::Math::XYZPoint(lHit.get_x(),lHit.get_y(),lHit.get_z());
       if (isScint){
 	double aaaphi = pos.phi();
-	if(aaaphi<0) aaaphi+=2.*TMath::Pi();
+	//if(aaaphi<0) aaaphi+=2.*TMath::Pi();
 	cellid = map->FindBin(pos.eta(),aaaphi);
 	//cellid = map->FindBin(pos.eta(),pos.phi());
       } else {
@@ -949,6 +952,10 @@ int main(int argc, char** argv){//main
       double lenergy=lHit.energy()*absW[layer]/1000.;
       unsigned lcellid=lHit.cellid();
       isScint = subdet.isScint;
+      if(lcellid>4000000000) {
+	std::cout<<" weird rechit cellid x y z E "<<lcellid<<" "<<xH<<" "<<yH<<" "<<zH<<" "<<lenergy<<std::endl;
+	h_eWeirdSim->Fill(lenergy);
+      }
       if(lenergy>maxSim) {
 	maxSim=lenergy;
 	msxH=xH;
