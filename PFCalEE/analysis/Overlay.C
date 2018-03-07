@@ -8,9 +8,9 @@ void Overlay()
   //  char* hname ="ana/h_njet";
   // char* atitle = "number jets";
 
-  char* hname_norm ="h_egenrecopphi";
-  char* hname ="h_egenrecopphidead";
-  char* atitle = "e 50 GeV ET pions";
+  char* hname_norm ="h_ECone03";
+  char* hname ="h_simHit03";
+  char* atitle = "energy 100 GeV ET pions";
 
 
 
@@ -134,8 +134,8 @@ C_pt->Scale(1/aaC);
  // lgd->AddEntry(C_pt, "data W to mu", "l");
 
 
-  lgd->AddEntry(A_pt, "nonedead", "l");
-  lgd->AddEntry(B_pt, "50% dead", "l");
+  lgd->AddEntry(A_pt, "rechits", "l");
+  lgd->AddEntry(B_pt, "simhits", "l");
   //lgd->AddEntry(C_pt, "ModelBx500", "l");
 
  lgd->Draw();

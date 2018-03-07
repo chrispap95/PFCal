@@ -435,8 +435,8 @@ int main(int argc, char** argv){//main
   TH1F* h_phimax = new TH1F("h_phimax","phi of max hit",100,-4.,4.);
   TH1F* h_etamax = new TH1F("h_etamax","eta of max hit",100,1.,5.);
   TH1F* h_maxE = new TH1F("h_maxE","energy of highest energy hit",1000,0.,1000.);
-  TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,500.);
-  TH1F* h_simHit03 = new TH1F("h_simHit03","Sum simhit energy cone 03",1000,0.,500.);
+  TH1F* h_ECone03 = new TH1F("h_ECone03","Sum energy cone 03",1000,0.,1500.);
+  TH1F* h_simHit03 = new TH1F("h_simHit03","Sum simhit energy cone 03",1000,0.,1500.);
 
   TH2F* h_ssvec = new TH2F("h_ssvec","ssvec versus layer number", 70,0.,70.,100,0.,100.);
   TH1F* h_cellid = new TH1F("h_cellid","cell is",25000,0.,250000.);
@@ -1024,8 +1024,9 @@ int main(int argc, char** argv){//main
 
     if(debug>2) {
       std::cout<<"max sim hit cellid x y z eta phi energy "<<mscellid<<" "<<msxH<<" "<<msyH<<" "<<mszH<<" "<<msleta<<" "<<mslphi<<" "<<maxSim<<std::endl;
-
+      std::cout<<"sim hit sum is "<<simHitSum<<std::endl;
     }
+
     h_simHit03->Fill(simHitSum);
 
 
