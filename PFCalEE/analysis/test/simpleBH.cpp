@@ -290,6 +290,8 @@ int main(int argc, char** argv){//main
   HGCSSDetector & myDetector = theDetector();
   myDetector.buildDetector(versionNumber,true,false,bypassR);
 
+  HGCSSCalibration mycalib(inFilePath,false,52);
+
   //corrected for Si-Scint overlap
   const unsigned nLayers = 52;//
 
@@ -302,6 +304,8 @@ int main(int argc, char** argv){//main
 	    << ", nLayers = " << nLayers
 	    << std::endl;
   HGCSSGeometryConversion geomConv(model,cellSize,bypassR,3);
+
+
 
   geomConv.setXYwidth(calorSizeXY);
   geomConv.setVersion(versionNumber);
@@ -450,6 +454,9 @@ int main(int argc, char** argv){//main
   TH1F* h_eWeirdSim = new TH1F("h_eWeirdSim","energy of sim hits with invalid cell id",100,0.,100.);
 
 
+
+
+
   //////////////////////////////
   // for missing channel study
   //
@@ -502,6 +509,7 @@ int main(int argc, char** argv){//main
   HGCSSEvent * eventRec = 0;
   std::vector<HGCSSSamplingSection> * ssvec = 0;
   std::vector<HGCSSSimHit> * simhitvec = 0;
+  std::vector<HGCSSSimHit> * alusimhitvec = 0;
   std::vector<HGCSSRecoHit> * rechitvec = 0;
   std::vector<HGCSSGenParticle> * genvec = 0;
   unsigned nPuVtx = 0;
@@ -511,6 +519,7 @@ int main(int argc, char** argv){//main
   lSimTree->SetBranchAddress("HGCSSEvent",&event);
   lSimTree->SetBranchAddress("HGCSSSamplingSectionVec",&ssvec);
   lSimTree->SetBranchAddress("HGCSSSimHitVec",&simhitvec);
+  //  lSimTree->SetBranchAddress("HGCSSAluSimHitVec",&alusimhitvec);
   lSimTree->SetBranchAddress("HGCSSGenParticleVec",&genvec);
 
   lRecTree->SetBranchAddress("HGCSSEvent",&eventRec);
@@ -545,6 +554,7 @@ int main(int argc, char** argv){//main
   for (unsigned ievt(0); ievt<nEvts; ++ievt){//loop on entries
     if (ievtRec>=lRecTree->GetEntries()) continue;
 
+    mycalib.setVertex(0.,0.,0.);
 
     if (debug) std::cout << std::endl<<std::endl<<"... Processing entry: " << ievt << std::endl;
     else if (ievt%50 == 0) std::cout << "... Processing entry: " << ievt << std::endl;
@@ -647,6 +657,8 @@ int main(int argc, char** argv){//main
       int ip=ixx-scintoffset;
       const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
       isScint = subdet.isScint;
+
+
 
       TH2Poly *map = isScint?(subdet.type==DetectorEnum::BHCAL1?geomConv.squareMap1():geomConv.squareMap2()): shape==4?geomConv.squareMap() : shape==2?geomConv.diamondMap() : shape==3? geomConv.triangleMap(): geomConv.hexagonMap();
 
@@ -949,7 +961,9 @@ int main(int argc, char** argv){//main
       double theta=atan(tant);
       double leta=-log(tan(theta/2.));
       double lphi = atan2(yH,xH);
-      double lenergy=lHit.energy()*absW[layer]/1000.;
+      //double lenergy=lHit.energy()*absW[layer]/1000.;
+      double lenergy=lHit.energy()*mycalib.MeVToMip(layer,rH)*absW[layer]/1000.;
+      //double lenergy=lHit.energy()/1000.;
       unsigned lcellid=lHit.cellid();
       isScint = subdet.isScint;
       if(lcellid>4000000000) {
@@ -973,6 +987,7 @@ int main(int argc, char** argv){//main
       }
 
     }//loop on simhits
+
     double logmaxcellid=log10(4293967295);
     if(mscellid>0) logmaxcellid=log10(mscellid);
     h_cellids->Fill(logmaxcellid);
@@ -980,7 +995,32 @@ int main(int argc, char** argv){//main
     if(dR>0.5) {
       h_badcellids->Fill(logmaxcellid);
     }
+    /*
+    // add alusumhits
+    for (unsigned iH(0); iH<(*alusimhitvec).size(); ++iH){//loop on hits
+      HGCSSSimHit lHit = (*simhitvec)[iH];
+      unsigned layer = lHit.layer();
+      const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
+      ROOT::Math::XYZPoint haha = lHit.position(subdet,geomConv,shape);
+      double xH=haha.x();
+      double yH=haha.y();
+      double zH = haha.z();
+      double rH=sqrt(xH*xH+yH*yH);
+      double tant = rH/zH;
+      double theta=atan(tant);
+      double leta=-log(tan(theta/2.));
+      double lphi = atan2(yH,xH);
+      //double lenergy=lHit.energy()*absW[layer]/1000.;
+      double lenergy=lHit.energy()/1000.;
+      //double lenergy=lHit.energy()*mycalib.MeVToMip(layer,rH)*absW[layer]/1000.;
 
+      double dR=DeltaR(etaaxis,phiaxis,leta,lphi);
+      if(dR<0.3) {
+	simHitSum+=lenergy;
+      }
+
+    }//loop on simhits
+    */
 
     if(debug>2) {
       std::cout<<"max sim hit cellid x y z eta phi energy "<<mscellid<<" "<<msxH<<" "<<msyH<<" "<<mszH<<" "<<msleta<<" "<<mslphi<<" "<<maxSim<<std::endl;
