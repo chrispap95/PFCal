@@ -290,7 +290,7 @@ int main(int argc, char** argv){//main
   HGCSSDetector & myDetector = theDetector();
   myDetector.buildDetector(versionNumber,true,false,bypassR);
 
-  HGCSSCalibration mycalib(inFilePath,false,52);
+  HGCSSCalibration mycalib(inFilePath);
 
   //corrected for Si-Scint overlap
   const unsigned nLayers = 52;//
@@ -375,7 +375,12 @@ int main(int argc, char** argv){//main
   TH1F* h_l = new TH1F("h_l","layer of hit",80,0.,80.);
   TH1F* h_l2 = new TH1F("h_l2","layer of hit",30,50,80.);
   TH2F* h_zl = new TH2F("h_zl","z vs l of hit",5000,4300.,5200,25,30.,55.);
-
+  TH2F* h_simD1 = new TH2F("h_simD1","energy sim hits in eta phi",100,1.,4.,100,-4.,4.);
+  TH2F* h_simD2 = new TH2F("h_simD2","weight sim hits in eta phi",100,1.,4.,100,-4.,4.);
+  TH1F* h_simD3 = new TH1F("h_simD3","calib weight",100,0.,100.);
+  TH2F* h_simD4 = new TH2F("h_simD4","weight versus layer",100,1.,100.,100,0.,100.);
+  TH2F* h_simD5 = new TH2F("h_simD5","weight versus r",100,0.,300.,100,0.,100.);
+  TH2F* h_simD6 = new TH2F("h_simD6","reco versus sim ",100,0.,400.,100,0.,1200.);
 
   TH2F *h_sxy[nscintlayer]; // last 16 layers, scint part
   TH2F *h_nsxy[nscintlayer];  // last 16 layers, not scint part
@@ -948,11 +953,14 @@ int main(int argc, char** argv){//main
     unsigned mscellid=0;
 
     unsigned isimMax=-1;
+    if(debug>2) std::cout<<"stuff on sim hits"<<std::endl;
     for (unsigned iH(0); iH<(*simhitvec).size(); ++iH){//loop on hits
       HGCSSSimHit lHit = (*simhitvec)[iH];
       unsigned layer = lHit.layer();
       const HGCSSSubDetector & subdet = myDetector.subDetectorByLayer(layer);
       ROOT::Math::XYZPoint haha = lHit.position(subdet,geomConv,shape);
+      isScint = subdet.isScint;
+      unsigned lcellid=lHit.cellid();
       double xH=haha.x();
       double yH=haha.y();
       double zH = haha.z();
@@ -961,11 +969,20 @@ int main(int argc, char** argv){//main
       double theta=atan(tant);
       double leta=-log(tan(theta/2.));
       double lphi = atan2(yH,xH);
-      //double lenergy=lHit.energy()*absW[layer]/1000.;
       double lenergy=lHit.energy()*mycalib.MeVToMip(layer,rH)*absW[layer]/1000.;
-      //double lenergy=lHit.energy()/1000.;
-      unsigned lcellid=lHit.cellid();
-      isScint = subdet.isScint;
+      double time = lHit.time();
+      unsigned ilay = lHit.silayer();
+
+
+      h_simD1->Fill(leta,lphi,lHit.energy());
+      h_simD2->Fill(leta,lphi,mycalib.MeVToMip(layer,rH));
+      h_simD3->Fill(mycalib.MeVToMip(layer,rH));
+      h_simD4->Fill(layer,mycalib.MeVToMip(layer,rH));
+      h_simD5->Fill(rH,mycalib.MeVToMip(layer,rH));
+		    
+
+      if(lHit.energy()>0) std::cout<<xH<<" "<<yH<<" "<<zH<<" "<<layer<<" "<<rH<<" "<<leta<<" "<<lphi<<" "<<lHit.energy()<<" "<<mycalib.MeVToMip(layer,rH)<<" "<<lenergy<<" "<<time<<" "<<ilay<<std::endl;
+
       if(lcellid>4000000000) {
 	std::cout<<" weird rechit cellid x y z E "<<lcellid<<" "<<xH<<" "<<yH<<" "<<zH<<" "<<lenergy<<std::endl;
 	h_eWeirdSim->Fill(lenergy);
@@ -987,6 +1004,9 @@ int main(int argc, char** argv){//main
       }
 
     }//loop on simhits
+
+    h_simHit03->Fill(simHitSum);
+    h_simD6->Fill(rechitsum[3],simHitSum);
 
     double logmaxcellid=log10(4293967295);
     if(mscellid>0) logmaxcellid=log10(mscellid);
@@ -1027,7 +1047,7 @@ int main(int argc, char** argv){//main
       std::cout<<"sim hit sum is "<<simHitSum<<std::endl;
     }
 
-    h_simHit03->Fill(simHitSum);
+
 
 
 

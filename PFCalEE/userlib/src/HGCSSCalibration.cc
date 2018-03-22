@@ -111,5 +111,8 @@ double HGCSSCalibration::MeVToMip(const unsigned layer, const double aRadius, co
   }
   if (aRadius>r1) return res*2./3.;//300um
   else if (aRadius < r2) return res*2.;//100um
+
+  //std::cout<<"MeVToMip layer "<<layer<<" aRadius "<<aRadius<<" res "<<res<<" si "<<theDetector().subDetectorByLayer(layer).isSi<<std::endl;
+
   return res;
 }
