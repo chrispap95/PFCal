@@ -35,7 +35,7 @@ export USERBASE=`pwd`
 export ARCH=x86_64-slc6-gcc46-opt
 export ARCH2=x86_64-slc6-gcc46-opt
 export ARCHd=x86_64-slc6-gcc46-dbg
-source /cvmfs/sft.cern.ch/lcg/external/gcc/4.6.3/x86_64-slc6/setup.sh
+source /cvmfs/sft.cern.ch/lcg/external/gcc/4.6.3/x86_64-slc6/setup.sh ""
 
 locate gfortran
 
