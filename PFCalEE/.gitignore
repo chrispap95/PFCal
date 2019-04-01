@@ -1,4 +1,8 @@
-
+*.png
+*.jpeg
+*.eps
+*.pdf
+*.pptx
 PLOTS/
 LSFJOB_*
 *.d
