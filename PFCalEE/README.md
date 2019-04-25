@@ -21,8 +21,9 @@ understand them (see also example in class userlib/include/HGCSSSimHit.hh).
 source g4env.sh
 
 ## Compile
-
+```bash
 mkdir -p userlib/{lib,obj,bin} && cd userlib && make dictionary && make -j 5 && cd - && make -j 5
+```
 
 ## Submit in parallel the runs submitProd.py
 use option -S to not submit automatically to batch queues
