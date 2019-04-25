@@ -32,9 +32,8 @@ mkdir -p userlib/{lib,obj,bin} && cd userlib && make dictionary && make -j 5 && 
 ## Example with particle gun:
 Edit submitProd.py to set the energy loop to the values wanted.
 For loop is to generate several samples with same stat in parallel.
+
 `for i in seq 0 5; do python submitProd.py -s 1nd -q 2nd -t V00-00-00 -g -r ${i} -v 3 -m 0 -e /store/cmst3/group/hgcal/Geant4 -o ~/work/ntuples -d e- -n 2500; done`
 
 ## Example with hepmc file:
-```bash
-./submitProd.py -S -q 2nd -t V00-00-00 -f /afs/cern.ch/work/a/amagnan/CMSSW_6_2_0_SLHC8/src/UserCode/Gen2HepMC/test/VBFH_sel.dat  -v 20 -m 2 -e /store/cmst3/group/hgcal/Geant4 -o ~/work/ntuples -d VBFH -n 1000
-```
+`./submitProd.py -S -q 2nd -t V00-00-00 -f /afs/cern.ch/work/a/amagnan/CMSSW_6_2_0_SLHC8/src/UserCode/Gen2HepMC/test/VBFH_sel.dat  -v 20 -m 2 -e /store/cmst3/group/hgcal/Geant4 -o ~/work/ntuples -d VBFH -n 1000`
