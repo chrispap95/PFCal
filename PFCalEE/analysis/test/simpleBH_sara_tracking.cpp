@@ -494,22 +494,20 @@ int main(int argc, char** argv){
 
     std::cout << "\nCreating Track sample ..." << std::endl;
     for(auto itr = Trvectorev.begin(); itr != Trvectorev.end(); ++itr) {
-        if ((*itr)[2]>0) {
-            Trlayer = (*itr)[0];
-            Trcellid = (*itr)[1];
-            Treta = (*itr)[2];
-            Trphi = (*itr)[3];
-            Trn1 = (*itr)[4];
-            Trn2 = (*itr)[5];
-            Trn3 = (*itr)[6];
-            Trn4 = (*itr)[7];
-            Trn5 = (*itr)[8];
-            Trn6 = (*itr)[9];
-            Trtrack = (*itr)[10];
-            Trnup = (*itr)[11];
-            Trndown = (*itr)[12];
-            t1->Fill();
-        }
+        Trlayer = (*itr)[0];
+        Trcellid = (*itr)[1];
+        Treta = (*itr)[2];
+        Trphi = (*itr)[3];
+        Trn1 = (*itr)[4];
+        Trn2 = (*itr)[5];
+        Trn3 = (*itr)[6];
+        Trn4 = (*itr)[7];
+        Trn5 = (*itr)[8];
+        Trn6 = (*itr)[9];
+        Trtrack = (*itr)[10];
+        Trnup = (*itr)[11];
+        Trndown = (*itr)[12];
+        t1->Fill();
     }
     fout->cd();
     fout->Write();
