@@ -63,12 +63,11 @@ double DeltaR(double eta1,double phi1,double eta2,double phi2){
     return dr;
 }
 
-int TrackId(int layer, double theta, double phi){
+std::pair<double, double> TrackId(int layer, double theta, double phi){
     double z = zlayer[layer-1];
-    double x = z*TMath::cos(phi)*TMath::tan(theta);
-    double y = z*TMath::sin(phi)*TMath::tan(theta);
-    TH2Poly* map = geomConv.hexagonMap();
-    return map->FindBin(x,y);
+    double x = z*cos(phi)*tan(theta);
+    double y = z*sin(phi)*tan(theta);
+    return std::make_pair(x,y);
 }
 
 int main(int argc, char** argv){
@@ -77,21 +76,6 @@ int main(int argc, char** argv){
     **********************************/
     const unsigned nscintlayer=16;
     const unsigned scintoffset=36;
-    const unsigned nsilayer=52;
-
-    // Define cell id boundaries
-    unsigned scintminid[nscintlayer]={145,179,219,206,159,205,274,284,28,223,47,24,219,1,188,211};
-    unsigned scintmaxid[nscintlayer]={32545,32579,32619,32606,20823,20869,20938,20948,20692,20887,20711,20688,20883,20665,20852,20875};
-
-    unsigned siminid[nsilayer]={34987,34497,33997,33510,33007,33001,32505,32011,31515,31024,30531,30518,30025,29528,29035,28548,28045,
-        28036,27542,27049,26552,26062,25562,25556,25057,24566,24066,23576,22080,20105,18607,17114,15136,13643,12150,10177,34987,34497,
-        33507,33007,33001,32505,32011,31515,31024,30531,30518,30025,29528,29035,28548
-    };
-    unsigned simaxid[nsilayer]={250502,250992,251492,251979,2522479,252488,252982,253475,253972,254465,254955,254971,255464,255958,
-        256454,256941,257441,257451,257947,258437,258937,259427,259927,259930,260430,260920,261420,261910,263406,265382,266882,268375,
-        270347,271844,273337,275316,250502,250992,251979,252479,252488,252982,253475,253972,254465,254955,254971,255464,255958,256454,
-        256941
-    };
 
     //Input output and config options
     std::string cfg;
@@ -104,8 +88,7 @@ int main(int argc, char** argv){
     std::string recoFileName;
     std::string TrFilePath;
     unsigned debug;
-    double deadfrac;
-    bool adjacent, Trsample;
+    bool Trsample;
     po::options_description preconfig("Configuration");
     preconfig.add_options()("cfg,c",po::value<std::string>(&cfg)->required());
     po::variables_map vm;
@@ -273,7 +256,7 @@ int main(int argc, char** argv){
     ** We also need to create a ?set? container to store the values before writing to TTree
     **********************************/
     TFile* fout = new TFile(TrFilePath.c_str(),"RECREATE");
-    float Trlayer,Trcellid, Treta, Trphi, Trn1, Trn2, Trn3, Trn4, Trn5, Trn6, Trdead, Trnup, Trndown;
+    float Trlayer,Trcellid, Treta, Trphi, Trn1, Trn2, Trn3, Trn4, Trn5, Trn6, Trtrack, Trnup, Trndown;
     TTree* t1 = new TTree("t1","sample");
     t1->Branch("Trlayer",&Trlayer,"Trlayer/F");
     t1->Branch("Trcellid",&Trcellid,"Trcellid/F");
@@ -294,6 +277,7 @@ int main(int argc, char** argv){
     ** {track cell layer, tr id, tr eta, tr phi, Trn1, Trn2, Trn3, Trn4, Trn5, Trn6, Trnup,
     ** Trndown, track cell rechit}
     */
+    std::set<std::pair<unsigned, unsigned>> tracklist;
     std::vector<std::array<float, 13>> Trvectorev;
 
     /**********************************
@@ -364,10 +348,7 @@ int main(int argc, char** argv){
             }
         }
 
-        double Egen=-1.;
-        double ptgenpx=-1.;
-        double ptgenpy=-1.;
-        double ptgenpz=-1.;
+
         double etagen=99999.;
         double phigen=99999.;
         double thetagen=-1.;
@@ -375,10 +356,6 @@ int main(int argc, char** argv){
             etagen=(*genvec)[0].eta();
             phigen=(*genvec)[0].phi();
             thetagen=(*genvec)[0].theta();
-            ptgenpx=(*genvec)[0].px()/1000.0;
-            ptgenpy=(*genvec)[0].py()/1000.0;
-            ptgenpz=(*genvec)[0].pz()/1000.0;
-            Egen=sqrt(ptgenpx*ptgenpx+ptgenpy*ptgenpy+ptgenpz*ptgenpz);
         }
 
         bool isScint = false;
@@ -391,20 +368,21 @@ int main(int argc, char** argv){
         ** Now we need to populate a list with the predicted cellids for each
         ** layer. This accomplished through the use of TrackId() for each layer.
         */
+        TH2Poly* map2 = geomConv.hexagonMap();
         std::array<float, 13> Trarr;
-        for(auto itr = Trarr.begin(); itr != Trarr.end(); itr++) {
-            for(unsigned k(0); k < 13; ++k) (*itr)[k] = 0;
-        }
+        for(unsigned k(0); k < 13; ++k) Trarr[k] = 0;
         for (unsigned iL(0); iL < nlay; ++iL){
             Trarr[0] = iL;
-            Trarr[1] = TrackId(iL, thetagen, phigen);
-            Trvectorev.push_back(Trarr));
+            std::pair<double, double> xypair = TrackId(iL, thetagen, phigen);
+            Trarr[1] = map2->FindBin(xypair.first, xypair.second);
+            Trvectorev.push_back(Trarr);
+            tracklist.insert(std::make_pair(Trarr[0],Trarr[1]));
         }
 
         // Populate vectors for neighboring cells of track cells
         std::vector<std::pair<unsigned, unsigned>> neighbors;
         std::vector<std::pair<unsigned, unsigned>> neighbors_inlay;
-        for(auto itr=Trvector.begin();itr!=Trvector.end();itr++ ) {
+        for(auto itr=tracklist.begin();itr!=tracklist.end();itr++ ) {
             neighbors.push_back({(*itr).first-1, (*itr).second});
             neighbors.push_back({(*itr).first+1, (*itr).second});
             neighbors_inlay.push_back({(*itr).first, (*itr).second-497});
@@ -515,25 +493,22 @@ int main(int argc, char** argv){
     }//loop on entries
 
     std::cout << "\nCreating Track sample ..." << std::endl;
-    for(auto itr1 = Trvector.begin(); itr1 != Trvector.end(); ++itr1) {
-        std::vector<std::array<float, 13>> temp = *itr1;
-        for(auto itr = temp.begin(); itr != temp.end(); ++itr) {
-            if ((*itr)[2]>0) {
-                Trlayer = (*itr)[0];
-                Trcellid = (*itr)[1];
-                Treta = (*itr)[2];
-                Trphi = (*itr)[3];
-                Trn1 = (*itr)[4];
-                Trn2 = (*itr)[5];
-                Trn3 = (*itr)[6];
-                Trn4 = (*itr)[7];
-                Trn5 = (*itr)[8];
-                Trn6 = (*itr)[9];
-                Trdead = (*itr)[10];
-                Trnup = (*itr)[11];
-                Trndown = (*itr)[12];
-                t1->Fill();
-            }
+    for(auto itr = Trvectorev.begin(); itr != Trvectorev.end(); ++itr) {
+        if ((*itr)[2]>0) {
+            Trlayer = (*itr)[0];
+            Trcellid = (*itr)[1];
+            Treta = (*itr)[2];
+            Trphi = (*itr)[3];
+            Trn1 = (*itr)[4];
+            Trn2 = (*itr)[5];
+            Trn3 = (*itr)[6];
+            Trn4 = (*itr)[7];
+            Trn5 = (*itr)[8];
+            Trn6 = (*itr)[9];
+            Trtrack = (*itr)[10];
+            Trnup = (*itr)[11];
+            Trndown = (*itr)[12];
+            t1->Fill();
         }
     }
     fout->cd();
