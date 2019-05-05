@@ -48,7 +48,7 @@ export BOOSTSYS=/cvmfs/cms.cern.ch/slc6_amd64_gcc462/external/boost/1.47.0-cms
 export path=$path:/cvmfs/sft.cern.ch/lcg/external/CMake/2.8.6/${ARCH}/bin
 export path=$path:/cvmfs/sft.cern.ch/lcg/external/expat/2.0.1/${ARCH}
 
-export G4BASE=/data/users/eno
+export G4BASE=/data/users/data
 cd /data/users/eno/geant4.9.6.p04-install/share/Geant4-9.6.4/geant4make/
 source geant4make.sh
 cd ${USERBASE}
@@ -79,7 +79,7 @@ cd $RUN_DIR
 pwd
 echo $LD_LIBRARY_PATH
 locate gfortran
-./bin/simpleBH -c/data/users/eno/StandAlone/PFCal/PFCalEE/analysis/scripts/simpleBH.cfg >> $FINAL_LOG 2>&1
+./bin/simpleBH -c/data/users/chpapage/standalone/PFCal/PFCalEE/analysis/scripts/simpleBHet$4_eta1.7_mlsample.cfg >> $FINAL_LOG 2>&1
 
 
 

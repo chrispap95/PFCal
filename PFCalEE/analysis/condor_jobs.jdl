@@ -6,5 +6,34 @@ Requirements = TARGET.FileSystemDomain == "privnet"
 Output = simpleBH_sce_$(cluster)_$(process).stdout
 Error = simpleBH_sce_$(cluster)_$(process).stderr
 Log = simpleBH_sce_$(cluster)_$(process).condor
-Arguments = simple $(process) /data/users/eno/StandAlone/PFCal/PFCalEE/analysis 
-Queue 1
+
+Arguments = simple5new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 5
+Queue
+
+#Arguments = simple10new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 10 
+#Queue
+
+#Arguments = simple20new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 20
+#Queue
+
+#Arguments = simple30new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 30
+#Queue 
+
+#Arguments = simple40new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 40
+#Queue 
+
+#Arguments = simple60new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 60
+#Queue 
+
+#Arguments = simple80new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 80
+#Queue 
+
+#Arguments = simple100new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 100
+#Queue 
+
+#Arguments = simple150new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 150
+#Queue
+
+#Arguments = simple200new $(process) /data/users/chpapage/standalone/PFCal/PFCalEE/analysis 200
+#Queue
+
