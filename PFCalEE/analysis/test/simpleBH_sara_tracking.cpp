@@ -70,6 +70,27 @@ std::pair<double, double> TrackId(int layer, double theta, double phi){
     return std::make_pair(x,y);
 }
 
+std::set<int> neighbors_list(int cellint, int n) {
+    /* Gives a set of the IDs of the neighboring cells.
+    ** Parameter n gives the radius that is included eg. n=1 includes the nearest
+    ** neighbors, n=2 is nearest neighbors + neighbors' neighbors, etc.
+    */
+
+    std::set<int> v;
+
+    for (int i(1); i <= n; ++i) {
+        for (auto itr = v.begin(); itr != v.end(); itr++) {
+            v.insert((*itr)-497);
+            v.insert((*itr)-496);
+            v.insert((*itr)-1);
+            v.insert((*itr)+1);
+            v.insert((*itr)+496);
+            v.insert((*itr)+497);
+        }
+    }
+    return v;
+}
+
 int main(int argc, char** argv){
     /**********************************
     ** initialize some variables
