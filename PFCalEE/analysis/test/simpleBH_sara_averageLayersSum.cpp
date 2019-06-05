@@ -349,11 +349,6 @@ int main(int argc, char** argv){
         cd_si=siminid[ld_si]+(lRndm.Integer(range_si));
         // Enforce that any dead cell has no more than one adjacent dead cell
         unsigned adj_ok = 0;
-        /*Need to switch this off for the moment
-        if (deadlistsi.find(std::make_pair(ld_si, cd_si)) != deadlistsi.end()) {
-            --i;
-            continue;
-        }*/
         if (adjacent) {
             if (deadlistsi.find(std::make_pair(ld_si, cd_si-497)) != deadlistsi.end()) adj_ok++;
             if (deadlistsi.find(std::make_pair(ld_si, cd_si-496)) != deadlistsi.end()) adj_ok++;
@@ -364,10 +359,6 @@ int main(int argc, char** argv){
             if (adj_ok > 1) {
                 --i;
                 N_cluster2++;
-                /*std::cout << "N_try = " << N_try
-                << ": Found two or more adjascent dead cells for " << cd_si
-                << " at layer " << ld_si << ". Aborting cell killing..."
-                << std::endl;*/
                 continue;
             }
             if (adj_ok < 2) {
@@ -420,9 +411,7 @@ int main(int argc, char** argv){
     lSimTree->SetBranchAddress("HGCSSEvent",&event);
     lSimTree->SetBranchAddress("HGCSSSamplingSectionVec",&ssvec);
     lSimTree->SetBranchAddress("HGCSSSimHitVec",&simhitvec);
-    //lSimTree->SetBranchAddress("HGCSSAluSimHitVec",&alusimhitvec);
     lSimTree->SetBranchAddress("HGCSSGenParticleVec",&genvec);
-
     lRecTree->SetBranchAddress("HGCSSEvent",&eventRec);
     lRecTree->SetBranchAddress("HGCSSRecoHitVec",&rechitvec);
     if (lRecTree->GetBranch("nPuVtx")) lRecTree->SetBranchAddress("nPuVtx",&nPuVtx);
@@ -486,8 +475,6 @@ int main(int argc, char** argv){
         double rechitsumdead_Si = 0;
         double rechitsumlaypn = 0;
 
-        const unsigned nlay=27;
-        double rechsumdead[nlay] = {};
         for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
             HGCSSRecoHit lHit = (*rechitvec)[iH];
             unsigned layer = lHit.layer();
@@ -521,13 +508,6 @@ int main(int argc, char** argv){
                     std::set<std::pair<unsigned,unsigned>>::iterator ibc=deadlistsi.find(tempsi);
                     if(ibc==deadlistsi.end()) {
                         rechitsumdead_Si+=lenergy;
-                    } else {
-                        //Plot dead cell rechits
-                        for (unsigned i=1; i<27;i++){
-                            if(layer==i){
-                                rechsumdead[i]+=lenergy;
-                            }
-                        }
                     }
                     for(unsigned i(0); i < adj_to_dead.size(); i++){
                         if(cellid == adj_to_dead[i].second && layer == adj_to_dead[i].first){
