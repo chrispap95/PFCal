@@ -128,7 +128,7 @@ int main(int argc, char** argv){
     ("nRuns",           po::value<unsigned>(&nRuns)->default_value(0))
     ("debug,d",         po::value<unsigned>(&debug)->default_value(0))
     ("Trsample",        po::value<bool>(&Trsample)->default_value(1)) //Generate Tr study training sample
-    ("TrFilePath",      po::value<std::string>(&TrFilePath)->default_value("training_sample.root")) //File to export data for Tr
+    ("TrFilePath",      po::value<std::string>(&TrFilePath)->default_value("tracking_sample.root")) //File to export data for Tr
     ;
     po::store(po::command_line_parser(argc, argv).options(config).allow_unregistered().run(), vm);
     po::store(po::parse_config_file<char>(cfg.c_str(), config), vm);
@@ -159,11 +159,11 @@ int main(int argc, char** argv){
 
     std::cout << inputsim.str() << " " << inputrec.str() << std::endl;
 
+    // Initialize an object that contains basic detector info
     HGCSSInfo * info;
 
     TChain *lSimTree = new TChain("HGCSSTree");
     TChain *lRecTree = 0;
-
     TFile * simFile = 0;
     TFile * recFile = 0;
 
@@ -172,6 +172,7 @@ int main(int argc, char** argv){
     else lRecTree = new TChain("PUTree");
 
     if (nRuns == 0){
+        // Using testInputFile() (included in utilities.h) to check and import the files
         if (!testInputFile(inputsim.str(),simFile)) return 1;
         lSimTree->AddFile(inputsim.str().c_str());
         if (simFile) info =(HGCSSInfo*)simFile->Get("Info");
@@ -211,6 +212,13 @@ int main(int argc, char** argv){
         return 1;
     }
 
+    /* Get basic information from info object. Values are feeded by the data files.
+    **      versionNumber: 63 -- is how geometry is defined
+    **      model: 2
+    **      cellSize: 6.49635
+    **      shape: 1
+    **      calorSizeXY: 5600
+    */
     const unsigned versionNumber = info->version();
     const unsigned model = info->model();
     const unsigned shape = info->shape();
@@ -221,14 +229,23 @@ int main(int argc, char** argv){
     bool bypassR = false;
     if (isTBsetup) bypassR = true;
 
+    /* Initialize detector object
+    ** Method is myDetector.buildDetector(versionNumber,concept,isCaliceHcal,bypassR)
+    **      concept: seems like an obsolete variable
+    **      isCaliceHcal: introduces new weights for CALICE instead of HGCal
+    **      bypassR: if true the radius of the detector is limited
+    ** Finally, the printDetector() method is call to display info in the output
+    */
     HGCSSDetector & myDetector = theDetector();
     myDetector.buildDetector(versionNumber,true,false,bypassR);
 
+    /* Create a calibration object
+    ** Exists only to call method SetVertex to set vertex to (0,0,0) (???)
+    */
     HGCSSCalibration mycalib(inFilePath);
 
     //corrected for Si-Scint overlap
     const unsigned nLayers = 52;//
-
     std::cout << " -- Calor size XY = " << calorSizeXY
     << ", version number = " << versionNumber
     << ", model = " << model << std::endl
@@ -236,11 +253,18 @@ int main(int argc, char** argv){
     << ", shape = " << shape
     << ", nLayers = " << nLayers
     << std::endl;
-    HGCSSGeometryConversion geomConv(model,cellSize,bypassR,3);
 
+    /* Define HGCSSGeometryConversion object using model = 2
+    ** That gives a sensor hexagon width of 3400
+    ** Then set the width to the calorSizeXY = 5600 and set version to 63
+    */
+    HGCSSGeometryConversion geomConv(model,cellSize,bypassR,3);
     geomConv.setXYwidth(calorSizeXY);
     geomConv.setVersion(versionNumber);
 
+    /* Initialize a HoneyComb TH2Poly since shape is 1.
+    ** The hexagons are side down (90 deg rotated) and side = cellSize
+    */
     if (shape==2) geomConv.initialiseDiamondMap(calorSizeXY,10.);
     else if (shape==3) geomConv.initialiseTriangleMap(calorSizeXY,10.*sqrt(2.));
     else if (shape==1) geomConv.initialiseHoneyComb(calorSizeXY,cellSize);
@@ -278,7 +302,8 @@ int main(int argc, char** argv){
     ** We also need to create a ?set? container to store the values before writing to TTree
     **********************************/
     TFile* fout = new TFile(TrFilePath.c_str(),"RECREATE");
-    float Trlayer,Trcellid, Treta, Trphi, Trn1, Trn2, Trn3, Trn4, Trn5, Trn6, Trtrack, Trnup, Trndown;
+    float Trlayer,Trcellid, Treta, Trphi, Trn1, Trn2, Trn3, Trn4, Trn5, Trn6, Trtrack;
+    float Trnup, Trndown, cellx, celly;
     TTree* t1 = new TTree("t1","sample");
     t1->Branch("Trlayer",&Trlayer,"Trlayer/F");
     t1->Branch("Trcellid",&Trcellid,"Trcellid/F");
@@ -293,14 +318,15 @@ int main(int argc, char** argv){
     t1->Branch("Trtrack",&Trtrack,"Trtrack/F");
     t1->Branch("Trnup",&Trnup,"Trnup/F");
     t1->Branch("Trndown",&Trndown,"Trndown/F");
-
+    t1->Branch("cellx",&cellx,"cellx/F");
+    t1->Branch("celly",&celly,"celly/F");
     /*
     ** Define a vector of the array:
     ** {track cell layer, tr id, tr eta, tr phi, Trn1, Trn2, Trn3, Trn4, Trn5, Trn6, Trnup,
     ** Trndown, track cell rechit}
     */
     std::set<std::pair<unsigned, unsigned>> tracklist;
-    std::vector<std::array<float, 13>> Trvectorev;
+    std::vector<std::array<float, 15>> Trvectorev;
 
     /**********************************
     **  Start event loop
@@ -391,14 +417,26 @@ int main(int argc, char** argv){
         ** layer. This accomplished through the use of TrackId() for each layer.
         */
         TH2Poly* map2 = geomConv.hexagonMap();
-        std::array<float, 13> Trarr;
-        for(unsigned k(0); k < 13; ++k) Trarr[k] = 0;
+
+        std::array<float, 15> Trarr;
+        for(unsigned k(0); k < 15; ++k) Trarr[k] = 0;
         for (unsigned iL(0); iL < nlay; ++iL){
             Trarr[0] = iL;
             std::pair<double, double> xypair = TrackId(iL, thetagen, phigen);
             Trarr[1] = map2->FindBin(xypair.first, xypair.second);
             Trvectorev.push_back(Trarr);
             tracklist.insert(std::make_pair(Trarr[0],Trarr[1]));
+
+            //Find center of the bin
+            for (int ix(-290); ix < 290; ++ix){
+                for (int iy(-250); iy < 250; ++iy){
+                    if(map2->FindBin(1.5*(float)ix*cellSize,sqrt(3)*(float)iy*cellSize/2) == Trarr[1]){
+                        Trarr[13] = 1.5*(float)ix-xypair.first/cellSize;
+                        Trarr[14] = sqrt(3)*(float)iy/2-xypair.second/cellSize;
+                        break;
+                    }
+                }
+            }
         }
 
         // Populate vectors for neighboring cells of track cells
@@ -529,6 +567,8 @@ int main(int argc, char** argv){
         Trtrack = (*itr)[10];
         Trnup = (*itr)[11];
         Trndown = (*itr)[12];
+        cellx = (*itr)[13];
+        celly = (*itr)[14];
         t1->Fill();
     }
     fout->cd();
