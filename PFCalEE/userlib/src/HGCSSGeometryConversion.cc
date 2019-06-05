@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cmath>
 
+//Converts (eta,phi) to (x,y) for a given z
 void HGCSSGeometryConversion::convertFromEtaPhi(std::pair<double,double> & xy, const double & z){
   double theta = 2*atan(exp(-1.*xy.first));
   double r = z/cos(theta);
@@ -11,8 +12,8 @@ void HGCSSGeometryConversion::convertFromEtaPhi(std::pair<double,double> & xy, c
   xy = std::pair<double,double>(x,y);
 }
 
+//
 HGCSSGeometryConversion::HGCSSGeometryConversion(const unsigned model, const double cellsize, const bool bypassR, const unsigned nSiLayers){
-
   dopatch_=false;
   width_ = 200;//mm
   model_ = model;
@@ -29,7 +30,7 @@ HGCSSGeometryConversion::HGCSSGeometryConversion(const unsigned model, const dou
 
   //height_ = width_:
   //if (model == 5) height_ = width_*sqrt(3)/2.
-  
+
   cellSize_ = cellsize;
   bypassRadius_ = bypassR;
   nSiLayers_ = nSiLayers;
@@ -137,7 +138,7 @@ void HGCSSGeometryConversion::initialiseSquareMap(TH2Poly *map, const double xym
   Double_t dx=side, dy=side;
   x1 = -1.*xymin;
   x2 = x1+dx;
-  
+
   for (i = 0; i<nx; i++) {
     y1 = -1.*xymin;
     y2 = y1+dy;
@@ -149,14 +150,14 @@ void HGCSSGeometryConversion::initialiseSquareMap(TH2Poly *map, const double xym
     x1 = x2;
     x2 = x1+dx;
   }
-  
+
   if (print) {
     std::cout <<  " -- Initialising squareMap with parameters: " << std::endl
 	      << " ---- xymin = " << -1.*xymin << ", side = " << side
 	      << ", nx = " << nx << ", ny=" << ny
 	      << std::endl;
   }
-  
+
 }
 
 void HGCSSGeometryConversion::initialiseSquareMap(TH2Poly *map, const double xmin, const double xmax, const double ymin, const double ymax, const double side, bool print){
@@ -167,7 +168,7 @@ void HGCSSGeometryConversion::initialiseSquareMap(TH2Poly *map, const double xmi
   Double_t dx=side, dy=side;
   x1 = xmin;
   x2 = x1+dx;
-  
+
   for (i = 0; i<nx; i++) {
     y1 = ymin;
     y2 = y1+dy;
@@ -179,14 +180,14 @@ void HGCSSGeometryConversion::initialiseSquareMap(TH2Poly *map, const double xmi
     x1 = x2;
     x2 = x1+dx;
   }
-  
+
   if (print) {
     std::cout <<  " -- Initialising eta-phi squareMap with parameters: " << std::endl
 	      << " ---- xmin = " << xmin << ", ymin = " << ymin << " side = " << side
 	      << ", nx = " << nx << ", ny=" << ny
 	      << std::endl;
   }
-  
+
 }
 
 void HGCSSGeometryConversion::initialiseDiamondMap(const double xymin, const double side){
@@ -217,14 +218,14 @@ void HGCSSGeometryConversion::initialiseDiamondMap(TH2Poly *map, const double xy
     }
     x[0] = x[1];
   }
-    
+
   if (print) {
     std::cout <<  " -- Initialising diamondMap with parameters: " << std::endl
 	      << " ---- xymin = " << -1.*xymin << ", side = " << side
 	      << ", nx = " << nx << ", ny=" << ny
 	      << std::endl;
   }
-  
+
 }
 
 void HGCSSGeometryConversion::initialiseTriangleMap(const double xymin, const double side){
@@ -233,7 +234,7 @@ void HGCSSGeometryConversion::initialiseTriangleMap(const double xymin, const do
 }
 
 void HGCSSGeometryConversion::initialiseTriangleMap(TH2Poly *map, const double xymin, const double side, bool print){
-    
+
   double h = sqrt(3.)/2.*side;
   unsigned nx=static_cast<unsigned>(xymin*2./h);
   unsigned ny=static_cast<unsigned>(xymin*2./side);
@@ -243,7 +244,7 @@ void HGCSSGeometryConversion::initialiseTriangleMap(TH2Poly *map, const double x
   x[0] = -1.*xymin;
 
   for (i = 0; i<nx; i++) {
-    //triangles in one side 
+    //triangles in one side
    x[1] = x[0]+dx;
     x[2] = x[0]+dx;
     y[0] = -1.*xymin+i%2*dy;
@@ -265,14 +266,14 @@ void HGCSSGeometryConversion::initialiseTriangleMap(TH2Poly *map, const double x
     }
     x[0] = x[0]+dx;
   }
-  
+
   if (print) {
     std::cout <<  " -- Initialising triangleMap with parameters: " << std::endl
 	      << " ---- xymin = " << -1.*xymin << ", side = " << side
 	      << ", nx = " << nx << ", ny=" << ny
 	      << std::endl;
   }
-  
+
 }
 
 void HGCSSGeometryConversion::initialiseHoneyComb(const double width, const double side){
@@ -372,23 +373,23 @@ void HGCSSGeometryConversion::myHoneycomb(TH2Poly* map,
 
 void HGCSSGeometryConversion::fillXY(TH2Poly* hist, std::map<int,std::pair<double,double> > & geom){
   TIter next(hist->GetBins());
-  TObject *obj=0; 
+  TObject *obj=0;
   TH2PolyBin *polyBin = 0;
   geom.clear();
-  
+
   while ((obj=next())){
     polyBin=(TH2PolyBin*)obj;
     int id = polyBin->GetBinNumber();
     std::pair<double,double> xy = std::pair<double,double>((polyBin->GetXMax()+polyBin->GetXMin())/2.,(polyBin->GetYMax()+polyBin->GetYMin())/2.);
     geom.insert(std::pair<unsigned,std::pair<double,double> >(id,xy));
   }
-  
+
   std::cout << " -- Check geomMap: size = " << geom.size() << std::endl;
   //std::map<int,std::pair<double,double> >::iterator liter=geom.begin();
   //for ( ; liter != geom.end();++liter){
   //std::cout << " id " << liter->first << ": x=" << liter->second.first << ", y=" << liter->second.second << std::endl;
   //}
-  
+
 }
 
 /*void HGCSSGeometryConversion::deleteHistos(std::vector<TH2Poly *> & aVec){
@@ -438,21 +439,21 @@ void HGCSSGeometryConversion::initialiseHistos(const bool recreate,
     avgMapE_[iL] = 0;
     avgMapZ_[iL] = 0;
   }
-  
+
   /*   for (unsigned iS(0); iS<theDetector().nSections();++iS){
      resetVector(HistMapE_[theDetector().detType(iS)],"EmipHits"+uniqStr,theDetector().detName(iS),theDetector().subDetectorBySection(iS),theDetector().nLayers(iS),recreate,print);
      //std::cout << " check: " << HistMapE_[theDetector().detType(iS)].size() << std::endl;
-     
+
      std::vector<double> avgvecE;
      avgvecE.resize(theDetector().nLayers(iS),0);
      avgMapE_[theDetector().detType(iS)]=avgvecE;
-     
+
      resetVector(HistMapTime_[theDetector().detType(iS)],"TimeHits"+uniqStr,theDetector().detName(iS),theDetector().subDetectorBySection(iS),theDetector().nLayers(iS),recreate,print);
      //std::cout << " check: " << HistMapTime_[theDetector().detType(iS)].size() << std::endl;
 
      resetVector(HistMapZ_[theDetector().detType(iS)],"zHits"+uniqStr,theDetector().detName(iS),theDetector().subDetectorBySection(iS),theDetector().nLayers(iS),recreate,print);
      //std::cout << " check: " << HistMapZ_[theDetector().detType(iS)].size() << std::endl;
-     
+
      std::vector<double> avgvecZ;
      avgvecZ.resize(theDetector().nLayers(iS),0);
      avgMapZ_[theDetector().detType(iS)]=avgvecZ;
@@ -486,7 +487,7 @@ void HGCSSGeometryConversion::fill(const unsigned layer,
   MergeCells tmpCell;
   tmpCell.energy = weightedE;
   tmpCell.time = weightedE*aTime;
-  
+
   if (!HistMap_[layer].insert(std::pair<unsigned,MergeCells>(cellid,tmpCell)).second){
     HistMap_[layer][cellid].energy += weightedE;
     HistMap_[layer][cellid].time += weightedE*aTime;
@@ -533,7 +534,7 @@ void HGCSSGeometryConversion::resetVector(std::vector<TH2Poly *> & aVec,
 					  std::string aString,
 					  const HGCSSSubDetector & aDet,
 					  const unsigned nLayers,
-					  bool recreate, 
+					  bool recreate,
 					  bool print)
 {
   //std::cout << " vector size: " << aVar << " " << aString << " = " << aVec.size() << std::endl;
@@ -551,8 +552,8 @@ void HGCSSGeometryConversion::resetVector(std::vector<TH2Poly *> & aVec,
   else {
     if (nLayers > 0){
       aVec.resize(nLayers,0);
-      if (print) std::cout << " -- Creating " << nLayers << " 2D histograms for " << aVar << " " << aString 
-	//<< " with " << nBins << " bins between " << min << " and " << max 
+      if (print) std::cout << " -- Creating " << nLayers << " 2D histograms for " << aVar << " " << aString
+	//<< " with " << nBins << " bins between " << min << " and " << max
 		<< std::endl;
       for (unsigned iL(0); iL<nLayers;++iL){
 	std::ostringstream lname;
@@ -580,7 +581,3 @@ void HGCSSGeometryConversion::resetVector(std::map<unsigned,MergeCells> & aVec)
 {
   aVec.clear();
 }
-
-
-
-
