@@ -317,7 +317,8 @@ int main(int argc, char** argv){
     TH1F* h_rechitsumdead_Si = new TH1F("h_rechitsumdead_Si","Rechitsum dead silicon",700,0,700.);
     TH1F* h_rechitsumave = new TH1F("h_rechitsumave","Sum energy average method",700,0,700.);
     TH1F* h_rechitsumave_layerSum = new TH1F("h_rechitsumave_layerSum","Sum energy average layer sums method",700,0,700.);
-
+    TH2F* h_layerSum_nodead = new TH2F("h_layerSum_nodead","Energy vs layer (no dead cells);layer;Energy [GeV]",28,0,28,100,0,200);
+    TH2F* h_layerSum_nodead = new TH2F("h_layerSum","Energy vs layer (with deda cells);layer;Energy [GeV]",28,0,28,100,0,200);
 
     /**********************************
     ** for missing channel study
@@ -477,8 +478,10 @@ int main(int argc, char** argv){
         double rechitsumlayerSum = 0;
         int nlay = 27;
         double layersum[nlay]; //Sum of all rechits in one layers
+        double layersum_nodead[nlay]; //Sum of all rechits in one layers
         for (int iL = 0; iL < nlay; ++iL) {
             layersum[iL] = 0;
+            layersum_nodead[iL] = 0;
         }
 
         for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
@@ -512,6 +515,7 @@ int main(int argc, char** argv){
                 if(!isScint) {
                     std::pair<unsigned,unsigned> tempsi(layer,cellid);
                     std::set<std::pair<unsigned,unsigned>>::iterator ibc=deadlistsi.find(tempsi);
+                    layersum_nodead[layer-1]+=lenergy;
                     if(ibc==deadlistsi.end()) {
                         rechitsumdead_Si+=lenergy;
                         layersum[layer-1]+=lenergy;
@@ -524,10 +528,16 @@ int main(int argc, char** argv){
                 }
             }
         }// end loop over hits
+        //Populate histograms
         double rechitsumave=rechitsumlaypn+rechitsumdead_Si;
         h_rechitsumave->Fill(rechitsumave);
         h_rechitsum->Fill(rechitsum);
         h_rechitsumdead_Si->Fill(rechitsumdead_Si);
+        h_rechitsumave_layerSum->Fill(rechitsumlayerSum);
+        for (int iL = 0; iL < nlay; ++iL) {
+            h_layerSum->Fill(iL+1,layersum[iL]);
+            h_layerSum_nodead->Fill(iL+1,layersum_nodead[iL]);
+        }
         ievtRec++;
     }//loop on entries
 
