@@ -474,6 +474,12 @@ int main(int argc, char** argv){
         double rechitsum = 0;
         double rechitsumdead_Si = 0;
         double rechitsumlaypn = 0;
+        double rechitsumlayerSum = 0;
+        int nlay = 27;
+        double layersum[nlay]; //Sum of all rechits in one layers
+        for (int iL = 0; iL < nlay; ++iL) {
+            layersum[iL] = 0;
+        }
 
         for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
             HGCSSRecoHit lHit = (*rechitvec)[iH];
@@ -508,6 +514,7 @@ int main(int argc, char** argv){
                     std::set<std::pair<unsigned,unsigned>>::iterator ibc=deadlistsi.find(tempsi);
                     if(ibc==deadlistsi.end()) {
                         rechitsumdead_Si+=lenergy;
+                        layersum[layer-1]+=lenergy;
                     }
                     for(unsigned i(0); i < adj_to_dead.size(); i++){
                         if(cellid == adj_to_dead[i].second && layer == adj_to_dead[i].first){
