@@ -272,6 +272,7 @@ int main(int argc, char** argv){
     float MLn1, MLn2, MLn3, MLn4, MLn5, MLn6;
     float MLdn1, MLdn2, MLdn3, MLdn4, MLdn5, MLdn6;
     float MLun1, MLun2, MLun3, MLun4, MLun5, MLun6;
+    float MLrechitsum;
     TTree* t1 = new TTree("t1","sample");
     t1->Branch("MLlayer",&MLlayer,"MLlayer/F");
     t1->Branch("MLcellid",&MLcellid,"MLcellid/F");
@@ -299,6 +300,7 @@ int main(int argc, char** argv){
     t1->Branch("MLdn5",&MLdn5,"MLdn5/F");
     t1->Branch("MLdn6",&MLdn6,"MLdn6/F");
     t1->Branch("MLevent",&MLevent,"MLevent/F");
+    t1->Branch("MLrechitsum",&MLrechitsum,"MLrechitsum/F");
 
     /*
     ** Define a vector of the array:
@@ -402,8 +404,8 @@ int main(int argc, char** argv){
     for(auto itr=deadlistsi.begin();itr!=deadlistsi.end();itr++ ) {
         std::array<float, 26> temp_vector;
         for(unsigned k(0); k < 26; ++k) temp_vector[k] = 0;
-        temp_vector[0] = (*itr).first; //layer
-        temp_vector[1] = (*itr).second; //dead cell's id
+        temp_vector[0] = (float)(*itr).first; //layer
+        temp_vector[1] = (float)(*itr).second; //dead cell's id
         MLvectorev.push_back(temp_vector);
 
         adj_to_dead.push_back({(*itr).first-1, (*itr).second});
@@ -490,6 +492,8 @@ int main(int argc, char** argv){
         bool isScint = false;
         double coneSize = 0.3;
 
+        MLrechitsum = 0;
+
         for (unsigned iH(0); iH<(*rechitvec).size(); ++iH){//loop on hits
             HGCSSRecoHit lHit = (*rechitvec)[iH];
             unsigned layer = lHit.layer();
@@ -519,6 +523,11 @@ int main(int argc, char** argv){
             if(dR<coneSize && dR1<53 && layer<28) {
                 if(!isScint) {
                     std::pair<unsigned,unsigned> tempsi(layer,cellid);
+                    std::set<std::pair<unsigned,unsigned>>::iterator ibc=deadlistsi.find(tempsi);
+                    if(ibc==deadlistsi.end()) {
+                        MLrechitsum+=lenergy;
+                    }
+
                     /* ML code
                     ** Input dead cells eta, phi and rechits
                     */
@@ -527,7 +536,7 @@ int main(int argc, char** argv){
                             (*itr)[2] = etagen;
                             (*itr)[3] = phigen;
                             (*itr)[10] = lenergy;
-                            (*itr)[25] = ievt;
+                            (*itr)[25] = (float)ievt;
                         }
                     }
 

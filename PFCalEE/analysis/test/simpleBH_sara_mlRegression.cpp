@@ -4,6 +4,7 @@
 #include<fstream>
 #include<sstream>
 #include<map>
+#include <cstdlib>
 #include <boost/algorithm/string.hpp>
 #include "boost/lexical_cast.hpp"
 #include "boost/program_options.hpp"
@@ -16,6 +17,10 @@
 #include "TH2F.h"
 #include "TH1F.h"
 #include "TF1.h"
+#include "TString.h"
+#include "TSystem.h"
+#include "TROOT.h"
+#include "TStopwatch.h"
 #include "TStyle.h"
 #include "TCanvas.h"
 #include "TLatex.h"
@@ -23,6 +28,10 @@
 #include "TMatrixD.h"
 #include "TMatrixDSym.h"
 #include "TVectorD.h"
+#include "TMVA/Factory.h"
+#include "TMVA/Tools.h"
+#include "TMVA/Reader.h"
+
 #ifdef _DEBUG
 #include "debug_new.h"
 #endif
@@ -49,6 +58,8 @@
 
 using boost::lexical_cast;
 namespace po=boost::program_options;
+
+using namespace TMVA;
 
 bool domap = true;
 
@@ -115,6 +126,73 @@ double DeltaR(double eta1,double phi1,double eta2,double phi2){
 }
 
 int main(int argc, char** argv){
+    /*******************************
+    ** TMVA Initialization Selection
+    *******************************/
+    //---------------------------------------------------------------
+    // This loads the library
+    TMVA::Tools::Instance();
+    std::cout << std::endl;
+    std::cout << "==> Start TMVARegressionApplication" << std::endl;
+
+    // --------------------------------------------------------------------------------------------------
+    // --- Create the Reader object
+    TMVA::Reader *reader = new TMVA::Reader( "!Color:!Silent" );
+
+    // Create a set of variables and declare them to the reader
+    // - the variable names MUST corresponds in name and type to those given in the weight file(s) used
+    Float_t layerR, n1, n2, n3, n4, n5, n6, nup, ndown, dead;
+    Float_t un1, un2, un3, un4, un5, un6;
+    Float_t dn1, dn2, dn3, dn4, dn5, dn6;
+    Float_t sameLayer, nextLayer, previousLayer, pnCells, sum1, sum2, sum3, sum4, sum5, sum6;
+    reader->AddVariable( "layerR", &layerR);
+    reader->AddVariable( "previousLayer", &previousLayer);
+    reader->AddVariable( "nextLayer", &nextLayer);
+    reader->AddVariable( "sameLayer", &sameLayer);
+    reader->AddVariable( "pnCells", &pnCells);
+    reader->AddVariable( "sum1", &sum1);
+    reader->AddVariable( "sum2", &sum2);
+    reader->AddVariable( "sum3", &sum3);
+    reader->AddVariable( "sum4", &sum4);
+    reader->AddVariable( "sum5", &sum5);
+    reader->AddVariable( "sum6", &sum6);
+    reader->AddVariable( "n1", &n1);
+    reader->AddVariable( "n2", &n2);
+    reader->AddVariable( "n3", &n3);
+    reader->AddVariable( "n4", &n4);
+    reader->AddVariable( "n5", &n5);
+    reader->AddVariable( "n6", &n6);
+    reader->AddVariable( "nup", &nup);
+    reader->AddVariable( "ndown", &ndown);
+    reader->AddVariable( "un1", &un1);
+    reader->AddVariable( "un2", &un2);
+    reader->AddVariable( "un3", &un3);
+    reader->AddVariable( "un4", &un4);
+    reader->AddVariable( "un5", &un5);
+    reader->AddVariable( "un6", &un6);
+    reader->AddVariable( "dn1", &dn1);
+    reader->AddVariable( "dn2", &dn2);
+    reader->AddVariable( "dn3", &dn3);
+    reader->AddVariable( "dn4", &dn4);
+    reader->AddVariable( "dn5", &dn5);
+    reader->AddVariable( "dn6", &dn6);
+
+    // --- Book the MVA methods
+    TString dir    = "dataset/weights/";
+    TString prefix = "TMVAReg_6Layers_340K_layerSum";
+    // Book method(s)
+    TString methodName = "DNN_CPU method";//it->first + " method";
+    TString weightfile = dir + prefix + "_" + "DNN_CPU" + ".weights.xml";
+    reader->BookMVA( methodName, weightfile );
+
+    /*
+    ** Define a vector of the array:
+    ** {dead cell(dc) layer, dc id, dc eta, dc phi, MLn1, MLn2, MLn3, MLn4, MLn5, MLn6, dc rechit}
+    */
+    std::vector<std::array<float, 23>> MLvectorev;
+    int navdev = 0;
+    Float_t avdevquad = 0;
+
 
     /**********************************
     ** initialize some variables
@@ -127,11 +205,13 @@ int main(int argc, char** argv){
 
     unsigned siminid[nsilayer]={34987,34497,33997,33510,33007,33001,32505,32011,31515,31024,30531,30518,30025,29528,29035,28548,28045,
         28036,27542,27049,26552,26062,25562,25556,25057,24566,24066,23576,22080,20105,18607,17114,15136,13643,12150,10177,34987,34497,
-        33507,33007,33001,32505,32011,31515,31024,30531,30518,30025,29528,29035,28548};
+        33507,33007,33001,32505,32011,31515,31024,30531,30518,30025,29528,29035,28548
+    };
     unsigned simaxid[nsilayer]={250502,250992,251492,251979,2522479,252488,252982,253475,253972,254465,254955,254971,255464,255958,
         256454,256941,257441,257451,257947,258437,258937,259427,259927,259930,260430,260920,261420,261910,263406,265382,266882,268375,
         270347,271844,273337,275316,250502,250992,251979,252479,252488,252982,253475,253972,254465,254955,254971,255464,255958,256454,
-        256941};
+        256941
+    };
 
     //Input output and config options
     std::string cfg;
@@ -316,9 +396,13 @@ int main(int argc, char** argv){
     TH1F* h_rechitsum = new TH1F("h_rechitsum","Rechitsum silicon",700,0,700.);
     TH1F* h_rechitsumdead_Si = new TH1F("h_rechitsumdead_Si","Rechitsum dead silicon",700,0,700.);
     TH1F* h_rechitsumave = new TH1F("h_rechitsumave","Sum energy average method",700,0,700.);
-    TH1F* h_rechitsumave_layerSum = new TH1F("h_rechitsumave_layerSum","Sum energy average layer sums method",700,0,700.);
-    TH2F* h_layerSum_nodead = new TH2F("h_layerSum_nodead","Energy vs layer (no dead cells);layer;Energy [GeV]",28,0,28,800,0,80);
-    TH2F* h_layerSum = new TH2F("h_layerSum","Energy vs layer (with deda cells);layer;Energy [GeV]",28,0,28,800,0,80);
+    TH1F* h_rechitsumave_mlRegression = new TH1F("h_rechitsumave_mlRegression","Sum energy ml regression",700,0,700.);
+
+    TH2F* hscatter2 = new TH2F("hscatter2", "ML bias;Rechit_{true} [GeV]; Rechit_{true}-Rechit_{ML} [GeV]", 100, 0, 0.4, 100, -30, 15);
+    TH2F* hscatter3 = new TH2F("hscatter3", "Averege bias;Rechit_{true} [GeV]; Rechit_{true}-Rechit_{ML} [GeV]", 100, 0, 0.4, 100, -30, 15);
+    TH2F* hscatter2r = new TH2F("hscatter2r", "ML bias vs Rechit_{ML};Rechit_{ML} [GeV]; Rechit_{true}-Rechit_{ML} [GeV]", 200, 0, 0.4, 200, -2, 2);
+    TH2F* hscatter3r = new TH2F("hscatter3r", "Average bias vs Rechit_{av};Rechit_{av} [GeV]; Rechit_{true}-Rechit_{av} [GeV]", 200, 0, 0.4, 200, -2, 2);
+
 
     /**********************************
     ** for missing channel study
@@ -334,6 +418,8 @@ int main(int argc, char** argv){
     std::cout<<"total number silicon channels is "<<nsichan<<std::endl;
     unsigned nsidead=deadfrac*nsichan;
     std::cout<<"total number of dead silicon channels is "<<nsidead<<std::endl;
+
+    const unsigned nDeadSiliconCell = 13983553*deadfrac;
 
     unsigned ld_si;
     unsigned cd_si;
@@ -390,10 +476,22 @@ int main(int argc, char** argv){
     }
 
     std::vector<std::pair<unsigned, unsigned>> adj_to_dead;//to define average energy in layers plus and minus 1
+    std::vector<std::pair<unsigned, unsigned>> adj_to_dead_inlay;//to define average energy in layer in cells plus and minus 1
     unsigned n = 0;
     for(auto itr=deadlistsi.begin();itr!=deadlistsi.end();itr++ ) {
+        std::array<float, 23> temp_vector;
+        for(unsigned k(0); k < 23; ++k) temp_vector[k] = 0;
+        MLvectorev.push_back(temp_vector);
+
         adj_to_dead.push_back({(*itr).first-1, (*itr).second});
         adj_to_dead.push_back({(*itr).first+1, (*itr).second});
+
+        adj_to_dead_inlay.push_back({(*itr).first, (*itr).second-497});
+        adj_to_dead_inlay.push_back({(*itr).first, (*itr).second-496});
+        adj_to_dead_inlay.push_back({(*itr).first, (*itr).second-1});
+        adj_to_dead_inlay.push_back({(*itr).first, (*itr).second+1});
+        adj_to_dead_inlay.push_back({(*itr).first, (*itr).second+496});
+        adj_to_dead_inlay.push_back({(*itr).first, (*itr).second+497});
         n+=1;
     }
 
@@ -423,6 +521,9 @@ int main(int argc, char** argv){
     bool firstEvent = true;
 
     for (unsigned ievt(0); ievt<nEvts; ++ievt){//loop on entries (events)
+        for(auto itr = MLvectorev.begin(); itr != MLvectorev.end(); itr++) {
+            for(unsigned k(2); k < 23; ++k) (*itr)[k] = 0;
+        }
         if (ievtRec>=lRecTree->GetEntries()) continue;
 
         mycalib.setVertex(0.,0.,0.);
@@ -475,7 +576,6 @@ int main(int argc, char** argv){
         double rechitsum = 0;
         double rechitsumdead_Si = 0;
         double rechitsumlaypn = 0;
-        double rechitsumlayerSum = 0;
         int nlay = 28;
         double layersum[nlay]; //Sum of all rechits in one layers
         double layersum_nodead[nlay]; //Sum of all rechits in one layers
@@ -513,6 +613,15 @@ int main(int argc, char** argv){
             if(dR<coneSize && dR1<53 && layer<28) {
                 rechitsum+=lenergy;
                 if(!isScint) {
+                    /* ML code
+                    ** Input dead cells eta, phi and rechits
+                    */
+                    for(auto itr = MLvectorev.begin(); itr != MLvectorev.end(); itr++) {
+                        if((*itr)[0] == layer && (*itr)[1] == cellid){
+                            (*itr)[22] = lenergy;
+                        }
+                    }
+
                     std::pair<unsigned,unsigned> tempsi(layer,cellid);
                     std::set<std::pair<unsigned,unsigned>>::iterator ibc=deadlistsi.find(tempsi);
                     layersum_nodead[layer]+=lenergy;
@@ -525,6 +634,76 @@ int main(int argc, char** argv){
                             rechitsumlaypn += lenergy/2;
                         }
                     }
+
+                    for(unsigned i(0); i < 6*nDeadSiliconCell-5; i++){
+                        //Loop over dead cells
+                        if(i < 2*nDeadSiliconCell-1) {
+                            if(cellid == adj_to_dead[i].second && layer == adj_to_dead[i].first) {
+                                /* ML code
+                                ** Find different layers neighbors
+                                ** Hint: Incorporate to Loop below...
+                                */
+                                int n_dead = (int)((float)i/2.);
+                                int j;
+                                if (i-2*n_dead == 0) j = -1;
+                                else if (i-2*n_dead == 1) j = 1;
+                                else {
+                                    std::cerr << "check 1 error" << std::endl;
+                                    return 1;
+                                }
+                                // Write the data in MLvectorev vector
+                                auto itr = MLvectorev.begin();
+                                while (itr != MLvectorev.end()) {
+                                    if((*itr)[0]+j == layer && (*itr)[1] == cellid) {
+                                        (*itr)[i-2*n_dead+8] = lenergy;
+                                        break;
+                                    }
+                                    itr++;
+                                }
+                            }
+                        }
+
+                        if(cellid == adj_to_dead_inlay[i].second && (layer == adj_to_dead_inlay[i].first
+                            || layer == adj_to_dead_inlay[i].first-1 || layer == adj_to_dead_inlay[i].first+1)
+                        ){
+                            /* ML code
+                            ** First find which is the dead cell and what neighbor we are at
+                            */
+                            int n_dead = (int)((float)i/6.);
+                            int j;
+                            if (i-6*n_dead == 0) j = -497;
+                            else if (i-6*n_dead == 1) j = -496;
+                            else if (i-6*n_dead == 2) j = -1;
+                            else if (i-6*n_dead == 3) j = 1;
+                            else if (i-6*n_dead == 4) j = 496;
+                            else j = 497;
+                            // Write the data in MLvectorev vector
+                            auto itr = MLvectorev.begin();
+                            while (itr != MLvectorev.end()) {
+                                if(layer == adj_to_dead_inlay[i].first) {
+                                    if((*itr)[0] == layer && (*itr)[1]+j == cellid) {
+                                        (*itr)[i-6*n_dead+2] = lenergy;
+                                        break;
+                                    }
+                                }else if(layer == adj_to_dead_inlay[i].first-1) {
+                                    if((*itr)[0] == layer+1 && (*itr)[1]+j == cellid) {
+                                        (*itr)[i-6*n_dead+16] = lenergy;
+                                        break;
+                                    }
+                                }else if(layer == adj_to_dead_inlay[i].first+1) {
+                                    if((*itr)[0] == layer-1 && (*itr)[1]+j == cellid) {
+                                        (*itr)[i-6*n_dead+10] = lenergy;
+                                        break;
+                                    }
+                                }else {
+                                    std::cerr << "Error 2: check loop.";
+                                    return 1;
+                                }
+
+                                itr++;
+                            }
+                        }
+                    }
                 }
             }
         }// end loop over hits
@@ -533,13 +712,59 @@ int main(int argc, char** argv){
         h_rechitsumave->Fill(rechitsumave);
         h_rechitsum->Fill(rechitsum);
         h_rechitsumdead_Si->Fill(rechitsumdead_Si);
-        h_rechitsumave_layerSum->Fill(rechitsumlayerSum);
-        for (int iL = 0; iL < nlay; ++iL) {
-            h_layerSum->Fill(iL,layersum[iL]);
-            h_layerSum_nodead->Fill(iL,layersum_nodead[iL]);
-        }
         ievtRec++;
+
+        float total_dead_rechit = 0;
+        for (auto  itr = MLvectorev.begin(); itr != MLvectorev.end(); itr++) {
+            layerR = (*itr)[0];
+            n1 = (*itr)[2];
+            n2 = (*itr)[3];
+            n3 = (*itr)[4];
+            n4 = (*itr)[5];
+            n5 = (*itr)[6];
+            n6 = (*itr)[7];
+            nup = (*itr)[8];
+            ndown = (*itr)[9];
+            un1 = (*itr)[10];
+            un2 = (*itr)[11];
+            un3 = (*itr)[12];
+            un4 = (*itr)[13];
+            un5 = (*itr)[14];
+            un6 = (*itr)[15];
+            dn1 = (*itr)[16];
+            dn2 = (*itr)[17];
+            dn3 = (*itr)[18];
+            dn4 = (*itr)[19];
+            dn5 = (*itr)[20];
+            dn6 = (*itr)[21];
+            dead = (*itr)[22];
+
+            previousLayer = dn1+dn2+dn3+dn4+dn5+dn6;
+            nextLayer = un1+un2+un3+un4+un5+un6;
+            sameLayer = n1+n2+n3+n4+n5+n6;
+            pnCells = ndown+nup;
+            sum1 = dn1+n1+un1;
+            sum2 = dn2+n2+un2;
+            sum3 = dn3+n3+un3;
+            sum4 = dn4+n4+un4;
+            sum5 = dn5+n5+un5;
+            sum6 = dn6+n6+un6;
+
+            Float_t val = (reader->EvaluateRegression( "DNN_CPU method" ))[0];
+            Float_t avrechit = nup/2+ndown/2;
+            avdevquad += pow(dead-val,2);
+            navdev++;
+            hscatter2->Fill(dead,(dead-val));
+            hscatter3->Fill(dead,(dead-avrechit));
+            hscatter2r->Fill(val,(dead-val));
+            hscatter3r->Fill(avrechit,(dead-avrechit));
+            total_dead_rechit += val;
+        }
+        h_rechitsumave_mlRegression->Fill(rechitsumdead_Si+total_dead_rechit);
     }//loop on entries
+
+    delete reader;
+    std::cout << "average quadratic deviation = " << sqrt(avdevquad/(float)n) << std::endl;
 
     if(debug) std::cout << "Writing files ..." << std::endl;
     outputFile->cd();

@@ -1,4 +1,4 @@
-//
+G4GeneralParticleSource//
 // ********************************************************************
 // * License and Disclaimer                                           *
 // *                                                                  *
@@ -26,7 +26,7 @@
 //
 // $Id$
 //
-// 
+//
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -42,7 +42,7 @@ class G4Event;
 class DetectorConstruction;
 class PrimaryGeneratorMessenger;
 class G4VPrimaryGenerator;
-class G4ParticleGun;
+class G4GeneralParticleSource;
 class HepMCG4AsciiReader;
 class HepMCG4PythiaInterface;
 
@@ -51,7 +51,7 @@ class HepMCG4PythiaInterface;
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
 public:
-  PrimaryGeneratorAction(G4int mod=0, double eta=0);    
+  PrimaryGeneratorAction(G4int mod=0, double eta=0);
   virtual ~PrimaryGeneratorAction();
 
   void GeneratePrimaries(G4Event*);
@@ -66,7 +66,7 @@ public:
 private:
   int model_;
   double eta_;
-  G4ParticleGun* particleGun;
+  G4GeneralParticleSource* particleGun;
   HepMCG4AsciiReader* hepmcAscii;
   HepMCG4PythiaInterface* pythiaGen;
 
@@ -74,7 +74,7 @@ private:
   G4String currentGeneratorName;
   std::map<G4String, G4VPrimaryGenerator*> gentypeMap;
 
-  DetectorConstruction*    Detector;     //pointer to the geometry    
+  DetectorConstruction*    Detector;     //pointer to the geometry
   PrimaryGeneratorMessenger* gunMessenger; //messenger of this class
   G4String                   rndmFlag;     //flag for a rndm impact point
 };
@@ -109,5 +109,3 @@ inline G4String PrimaryGeneratorAction::GetGeneratorName() const
   return currentGeneratorName;
 }
 #endif
-
-
