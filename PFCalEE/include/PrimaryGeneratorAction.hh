@@ -1,4 +1,3 @@
-G4GeneralParticleSource//
 // ********************************************************************
 // * License and Disclaimer                                           *
 // *                                                                  *
@@ -42,7 +41,7 @@ class G4Event;
 class DetectorConstruction;
 class PrimaryGeneratorMessenger;
 class G4VPrimaryGenerator;
-class G4GeneralParticleSource;
+class G4ParticleGun;
 class HepMCG4AsciiReader;
 class HepMCG4PythiaInterface;
 
@@ -66,7 +65,8 @@ public:
 private:
   int model_;
   double eta_;
-  G4GeneralParticleSource* particleGun;
+  G4ParticleGun
+  * particleGun;
   HepMCG4AsciiReader* hepmcAscii;
   HepMCG4PythiaInterface* pythiaGen;
 
