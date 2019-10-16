@@ -46,15 +46,15 @@ label=''
 nevents=opt.nevts
 
 myqueue=opt.lqueue
-    
+
 bval="BOFF"
-if opt.Bfield>0 : bval="BON" 
-    
+if opt.Bfield>0 : bval="BON"
+
 outDir='%sgit_%s-version_%d-model_%d-%s-%s'%(opt.out,opt.gittag,opt.version,opt.model,opt.datatype,bval)
-if len(label)>0: outDir='%s/%s'%(outDir,label) 
+if len(label)>0: outDir='%s/%s'%(outDir,label)
 eosDir='%s/git%s/%s'%(opt.eos,opt.gittag,opt.datatype)
 if opt.eta>0 : outDir='%s-eta_%3.3f'%(outDir,opt.eta)
-if opt.phi!=0.5 : outDir='%s/phi_%3.3fpi'%(outDir,opt.phi) 
+if opt.phi!=0.5 : outDir='%s/phi_%3.3fpi'%(outDir,opt.phi)
 if (opt.run>=0) : outDir='%s/run_%d'%(outDir,opt.run)
 
 os.system('mkdir -p %s'%outDir)
@@ -65,7 +65,7 @@ scriptFile.write('#!/bin/bash\n')
 scriptFile.write('localdir=`pwd`\n')
 scriptFile.write('export HOME=%s\n'%(os.environ['HOME']))
 scriptFile.write('cd %s/\n'%(os.getcwd()))
-scriptFile.write('source g4env.sh\n')
+scriptFile.write('source g4envLXPLUS.sh\n')
 scriptFile.write('cd $localdir\n')
 
 
@@ -75,8 +75,8 @@ if len(opt.datafileeos)>0:
 scriptFile.write('cp %s/g4steer.mac .\n'%(outDir))
 scriptFile.write('PFCalEE g4steer.mac %d %d %f %d %s %s %s | tee g4.log\n'%(opt.version,opt.model,opt.eta,shape,wthick,pbthick,droplayers))
 outTag='%s_version%d_model%d_%s'%(label,opt.version,opt.model,bval)
-if opt.eta>0 : outTag='%s_eta%3.3f'%(outTag,opt.eta) 
-if opt.phi!=0.5 : outTag='%s_phi%3.3fpi'%(outTag,opt.phi) 
+if opt.eta>0 : outTag='%s_eta%3.3f'%(outTag,opt.eta)
+if opt.phi!=0.5 : outTag='%s_phi%3.3fpi'%(outTag,opt.phi)
 if (opt.run>=0) : outTag='%s_run%d'%(outTag,opt.run)
 scriptFile.write('mv PFcal.root HGcal_%s.root\n'%(outTag))
 scriptFile.write('echo "--Local directory is " $localdir >> g4.log\n')
@@ -108,7 +108,7 @@ if len(opt.datafileeos)>0:
 scriptFile.write('cp * %s/\n'%(outDir))
 scriptFile.write('echo "All done"\n')
 scriptFile.close()
-    
+
 #write geant 4 macro
 g4Macro = open('%s/g4steer.mac'%(outDir), 'w')
 g4Macro.write('/control/verbose 0\n')
@@ -132,7 +132,7 @@ else :
     g4Macro.write('/generator/hepmcAscii/verbose 0\n')
 g4Macro.write('/run/beamOn %d\n'%(nevents))
 g4Macro.close()
-    
+
 #submit
 condorFile = open('%s/condorSubmitProd.sub'%(outDir), 'w')
 condorFile.write('universe = vanilla\n')
@@ -145,6 +145,5 @@ condorFile.write('Queue 1\n')
 condorFile.close()
 
 os.system('chmod u+rwx %s/runJob.sh'%outDir)
-if opt.nosubmit : os.system('echo condor_submit %s/condorSubmitProd.sub'%(outDir)) 
+if opt.nosubmit : os.system('echo condor_submit %s/condorSubmitProd.sub'%(outDir))
 else: os.system('condor_submit %s/condorSubmitProd.sub'%(outDir))
-
