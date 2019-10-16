@@ -64,3 +64,10 @@ These scripts will produce a flat energy distribution in (0,600)GeV.
 If you need discrete energies you need to uncomment the scripts and edit the PrimaryGeneratorAction.cc.
 (Hint: see the parent repositories in this case!)
 For loop is to generate several samples with same stat in parallel.
+
+## Running simpleBH analysis
+Go to analysis and do:
+```bash
+./simpleBH -c scripts/simpleBH.cfg
+```
+For the .cfg configuration files see the scripts/CfgGenerator.py script. It can generate multiple files in one run.
