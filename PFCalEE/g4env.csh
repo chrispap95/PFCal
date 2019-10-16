@@ -1,10 +1,6 @@
 #!/bin/tcsh -f
-#set echo
-#set verbose
 setenv USERBASE `pwd`
 setenv ARCH x86_64-slc6-gcc46-opt
-setenv ARCH2 x86_64-slc6-gcc46-opt
-setenv ARCHd x86_64-slc6-gcc46-dbg
 source /cvmfs/sft.cern.ch/lcg/external/gcc/4.6.3/x86_64-slc6/setup.csh
 setenv QTHOME /cvmfs/sft.cern.ch/lcg/external/qt/4.8.4/${ARCH}/
 setenv DAWNHOME /afs/cern.ch/sw/lcg/external/dawn/3_88a/x86_64-slc5-gcc43-opt/
@@ -17,7 +13,7 @@ setenv BOOSTSYS /cvmfs/cms.cern.ch/slc6_amd64_gcc462/external/boost/1.47.0-cms
 
 set path = ($path /cvmfs/sft.cern.ch/lcg/external/CMake/2.8.6/${ARCH}/bin)
 set path = ($path /cvmfs/sft.cern.ch/lcg/external/expat/2.0.1/${ARCH})
- 
+
 
 #setenv G4BASE /cvmfs/geant4.cern.ch/geant4
 #cd $G4BASE/9.6.p02/${ARCHd}/share/Geant4-9.6.2/geant4make/
