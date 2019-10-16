@@ -65,7 +65,7 @@ scriptFile.write('#!/bin/bash\n')
 scriptFile.write('localdir=`pwd`\n')
 scriptFile.write('export HOME=%s\n'%(os.environ['HOME']))
 scriptFile.write('cd %s/\n'%(os.getcwd()))
-scriptFile.write('source g4envLXPLUS.sh\n')
+scriptFile.write('source g4env.sh\n')
 scriptFile.write('cd $localdir\n')
 
 
