@@ -26,7 +26,7 @@
 //
 // $Id$
 //
-//
+// 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -38,7 +38,7 @@
 
 #include "G4RunManager.hh"
 #include "G4Event.hh"
-#include "G4GeneralParticleSource.hh"
+#include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4SystemOfUnits.hh"
@@ -55,26 +55,26 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(G4int mod, double eta)
 {
   model_ = mod;
   eta_ = eta;
-  //G4int n_particle = 1;
+  G4int n_particle = 1;
 
   eta_=1.8;
 
   // default generator is particle gun.
-  currentGenerator= particleGun= new G4GeneralParticleSource();
-  currentGeneratorName= "gps";
+  currentGenerator= particleGun= new G4ParticleGun(n_particle);
+  currentGeneratorName= "particleGun";
   hepmcAscii= new HepMCG4AsciiReader();
 #ifdef G4LIB_USE_PYTHIA
   pythiaGen= new HepMCG4PythiaInterface();
 #else
   pythiaGen= 0;
 #endif
-  gentypeMap["gps"]= particleGun;
+  gentypeMap["particleGun"]= particleGun;
   gentypeMap["hepmcAscii"]= hepmcAscii;
   gentypeMap["pythia"]= pythiaGen;
 
   Detector = (DetectorConstruction*)
              G4RunManager::GetRunManager()->GetUserDetectorConstruction();
-
+ 
   //create a messenger for this class
   gunMessenger = new PrimaryGeneratorMessenger(this);
 
@@ -89,7 +89,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(G4int mod, double eta)
   particleGun->SetParticleEnergy(10.*GeV);
   G4double position = -0.5*(Detector->GetWorldSizeZ());
   particleGun->SetParticlePosition(G4ThreeVector(0.*cm,0.*cm,position));
-
+  
   //G4cout << " -- Gun position set to: 0,0," << position << G4endl;
 
   rndmFlag = "off";
@@ -111,7 +111,7 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
   //this function is called at the begining of event
-  //
+  // 
   G4double x0 = 0.*cm, y0 = 0.*cm;
   G4double z0 = -0.5*(Detector->GetWorldSizeZ());
 
@@ -133,16 +133,18 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     break;
   default: break;
   }
-  G4cout<<"will robinson 2 eta is "<<eta_<<std::endl;
-
+  std::cout<<"will robinson 2 eta is "<<eta_<<std::endl;
+  
   particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
   G4cout << " -- Gun position set to: " << x0 << "," << y0 << "," << z0 << G4endl;
 
+  G4double energy_random = (G4RandFlat::shoot(0.,570.))*GeV;
+  particleGun->SetParticleEnergy(energy_random); 
   G4double theta0 = 2*atan(exp(-1*eta_));
   G4double phi0 = (G4RandFlat::shoot(0.,2*PI));
   if (model_ == 2) particleGun->SetParticleMomentumDirection(G4ThreeVector(cos(phi0)*sin(theta0), sin(phi0)*sin(theta0), cos(theta0)));
   std::cout<<"theta0 phi0 are "<<theta0<<" "<<phi0<<std::endl;
-
+  std::cout<<"energy is "<<energy_random<<std::endl; 
   if(currentGenerator){
     currentGenerator->GeneratePrimaryVertex(anEvent);
   }
@@ -155,3 +157,4 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+

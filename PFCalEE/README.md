@@ -60,7 +60,7 @@ These will produce 10 sim and digi files. what you need to change are:
 -f and -F and -o change to your own directory
 
 To set the energy of the sample you need to edit submitProd.py and submitDigi.py.
-These scripts will produce a flat energy distribution in (0,600)GeV.
+These scripts will produce a flat energy distribution in (0,570)GeV.
 If you need discrete energies you need to uncomment the scripts and edit the PrimaryGeneratorAction.cc.
 (Hint: see the parent repositories in this case!)
 For loop is to generate several samples with same stat in parallel.
