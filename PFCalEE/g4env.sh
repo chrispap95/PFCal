@@ -19,7 +19,7 @@ export PYTHONDIR=/cvmfs/sft.cern.ch/lcg/external/Python/2.7.3/${ARCH}/
 export PYTHONPATH=${PYTHONDIR}:${ROOTSYS}/lib
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$XERCESCROOT/lib:$HEPMC_DIR/lib:$USERBASE/userlib/lib:$USERBASE/analysis/lib:$FASTJET_INSTALL/lib:$BOOSTSYS/lib:$ROOTSYS/lib:$PYTHONDIR/lib
-cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.18/${ARCH}/root/
+cd /cvmfs/sft.cern.ch/lcg/external/ROOT/5.34.00/${ARCH}/root/
 source bin/thisroot.sh
 cd - &> /dev/null
 export PATH=$DAWNHOME/bin:$PATH:$FASTJET_INSTALL/bin:$BOOSTSYS:/cvmfs/sft.cern.ch/lcg/external/CMake/2.8.6/${ARCH}/bin:/cvmfs/sft.cern.ch/lcg/external/CMake/2.8.6/${ARCH}
