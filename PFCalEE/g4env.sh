@@ -1,7 +1,7 @@
 #!/bin/bash
 export USERBASE=`pwd`
 ARCH=x86_64-slc6-gcc46-opt
-source /cvmfs/sft.cern.ch/lcg/external/gcc/4.6.3/x86_64-slc6/setup.csh
+source /cvmfs/sft.cern.ch/lcg/external/gcc/4.6.3/x86_64-slc6/setup.sh
 export QTHOME=/cvmfs/sft.cern.ch/lcg/external/qt/4.8.4/${ARCH}/
 export DAWNHOME=/afs/cern.ch/sw/lcg/external/dawn/3_88a/x86_64-slc5-gcc43-opt/
 export G4DAWNFILE_DEST_DIR=${USERBASE}/DawnFiles/
