@@ -28,10 +28,10 @@ parser.add_option('-e', '--eos'         ,    dest='eos'                , help='e
 parser.add_option('-E', '--eosin'       ,    dest='eosin'              , help='eos path to read input root file from EOS',  default='')
 parser.add_option('-g', '--gun'         ,    action="store_true",  dest='dogun'              , help='use particle gun.')
 parser.add_option('-S', '--no-submit'   ,    action="store_true",  dest='nosubmit'           , help='Do not submit batch job.')
-parser.add_option(      '--enList'      ,    dest='enList'              , help='E_T list to use with gun [%default]', default='5,10,20,30,40,60,80,100,150,200')
+
 parser.add_option('--etamean' , dest='etamean' , help='mean value of eta ring to save' , default=0,  type=float)
 parser.add_option('--deta'    , dest='deta'    , help='width of eta ring'              , default=0,  type=float)
-parser.add_option('--inPathPU'    , dest='inPathPU'    , help='input path for PU files (overrides defaults) [%default]'              , default=None,  type='string')
+
 
 (opt, args) = parser.parse_args()
 
@@ -43,11 +43,15 @@ parser.add_option('--inPathPU'    , dest='inPathPU'    , help='input path for PU
 nSiLayers=2
 
 #No label: for 100um Si->will use small cell PU production!
-label=''
+#label=''
 #for using Si noise values for 300um and large hexagon cells
 #label='300u'
 #for using Si noise values for 200um and large hexagon cells
-#label='200u'
+label='200u'
+#label='v5_30'
+#label='v5_28'
+#label='v5_24'
+#label='v5_18'
 
 #INPATHPU="root://eoscms//eos/cms/store/user/msun/V12/MinBias/"
 INPATHPU="root://eoscms//eos/cms/store/cmst3/group/hgcal/Standalone/V12/MinBias/"
@@ -63,23 +67,12 @@ elif opt.version==63:
         INPATHPU="root://eoscms//eos/cms/store/cmst3/group/hgcal/HGCalTDR/gittestV8/MinBiasSmall/"
     else :
         INPATHPU="root://eoscms//eos/cms/store/group/dpg_hgcal/comm_hgcal/amagnan/HGCalTDR/gitV08-01-00/MinBiasLarge/"
-elif opt.version==67 or opt.version==60:
-    if (label==''):
-        INPATHPU="root://eoscms//eos/cms/store/group/dpg_hgcal/comm_hgcal/amagnan/HGCalTDR/gitV08-05-00/MinBiasSmall/"
-    else :
-        INPATHPU="root://eoscms//eos/cms/store/group/dpg_hgcal/comm_hgcal/amagnan/HGCalTDR/gitV08-05-00/MinBiasLarge/"
 
-if opt.inPathPU:
-    INPATHPU='root://eoscms//eos/cms/%s'%opt.inPathPU
-    print 'Default value for INPATHPU overriden with',INPATHPU
 
 #nPuVtxlist=[0,140,200]
 nPuVtxlist=[int(x) for x in opt.nPuVtx.split(',')]
 
-#to turn off add noise only hits: can be slow for muon files for example.
-#Default should be true.
-addNoise='false'
-
+#in %
 interCalibList=[3];#0,1,2,3,4,5,10,15,20,50]
 
 granularity='0-29:4,30-65:4'
@@ -115,8 +108,10 @@ elif (opt.version==30 or opt.version==100 or opt.version==110):
     noise='0-27:0.14'
     threshold='0-27:5'
 elif (opt.version==33):
+    #granularity='0-27:4,28-39:4,40-51:8'
     granularity='0-27:1,28-39:1,40-51:1'
     noise='0-39:0.,40-51:0.'
+    #noise='0-39:0.14,40-51:0.2'
     threshold='0-51:5'
 elif (opt.version==27 or opt.version==31):
     granularity='0-11:4,12-23:8'
@@ -150,14 +145,10 @@ elif (opt.version==39):
     granularity='0-8:4,9-20:8'
     noise='0-8:0.14,9-20:0.2'
     threshold='0-20:5'
-elif (opt.version==60 or opt.version==64 or opt.version==65 or opt.version==67):
+elif (opt.version==60):
     granularity='0-27:1'
     noise='0-27:0.12'
     threshold='0-27:5'
-elif (opt.version==66):
-    granularity='0-23:1'
-    noise='0-23:0.12'
-    threshold='0-23:5'
 elif (opt.version==61):
     granularity='0-39:1'
     noise='0-23:0.12,24-39:0.15'
@@ -194,16 +185,16 @@ for nPuVtx in nPuVtxlist:
         if (opt.etamean>1.3): suffix='%s_eta%3.2f_%3.2f'%(suffix,opt.etamean-opt.deta,opt.etamean+opt.deta)
 
         bval="BOFF"
-        if opt.Bfield>0 : bval="BON"
-
+        if opt.Bfield>0 : bval="BON" 
+            
         outDir='%s-git_%s-version_%d-model_%d-%s-%s'%(opt.out,opt.gittag,opt.version,opt.model,opt.datatype,bval)
-        outDir='%s-%s'%(outDir,label)
+        outDir='%s-%s'%(outDir,label) 
 
         #eosDirIn='%s'%(opt.eosin)
-        if opt.alpha>0 : outDir='%s-eta_%3.3f'%(outDir,opt.alpha)
-        if opt.phi!=0.5 : outDir='%s-phi_%3.3fpi'%(outDir,opt.phi)
+        if opt.alpha>0 : outDir='%s-eta_%3.3f'%(outDir,opt.alpha) 
+        if opt.phi!=0.5 : outDir='%s-phi_%3.3fpi'%(outDir,opt.phi) 
         if (opt.run>=0) : outDir='%s/run_%d'%(outDir,opt.run)
-
+        
         if len(opt.eos)>0:
             eosDir='%s'%(opt.eos)
             eosDirIn='%s'%(opt.eos)
@@ -214,38 +205,35 @@ for nPuVtx in nPuVtxlist:
         outlog='%s/digitizer%s.log'%(outDir,suffix)
         g4log='digijob%s.log'%(suffix)
         os.system('mkdir -p %s'%outDir)
-
+            
         #wrapper
         scriptFile = open('%s/runDigiJob%s.sh'%(outDir,suffix), 'w')
         scriptFile.write('#!/bin/bash\n')
         scriptFile.write('localdir=`pwd`\n')
-        scriptFile.write('export HOME=%s\n'%(os.environ['HOME']))
-        scriptFile.write('cd %s/../\n'%(os.getcwd()))
-        scriptFile.write('source g4env.sh\n')
-        scriptFile.write('echo $PATH\n')
-        scriptFile.write('cd $localdir\n')
-
+	scriptFile.write('export HOME=%s\n'%(os.environ['HOME']))
+	scriptFile.write('cd %s/../\n'%(os.getcwd()))
+	scriptFile.write('source g4env.sh\n')
+	scriptFile.write('echo $PATH\n')
+	scriptFile.write('cd $localdir\n')
         outTag='_version%d_model%d_%s'%(opt.version,opt.model,bval)
-        if opt.alpha>0 : outTag='%s_eta%3.3f'%(outTag,opt.alpha)
-        if opt.phi!=0.5 : outTag='%s_phi%3.3fpi'%(outTag,opt.phi)
+        if opt.alpha>0 : outTag='%s_eta%3.3f'%(outTag,opt.alpha) 
+        if opt.phi!=0.5 : outTag='%s_phi%3.3fpi'%(outTag,opt.phi) 
         if (opt.run>=0) : outTag='%s_run%d'%(outTag,opt.run)
         if (opt.etamean>1.3):
-            scriptFile.write('%s/bin/digitizer -c %s/DigiConfig.cfg -n %d -i %s/HGcal_%s.root -o $localdir/ --granulStr=%s --noiseStr=%s --threshStr=%s --interCalib=%d --nSiLayers=%d --nPU=%d --puPath=%s --etamean=%3.2f --deta=%3.2f -a %s | tee %s\n'%(os.getcwd(),os.getcwd(),opt.nevts,eosDirIn,outTag,granularity,noise,threshold,interCalib,nSiLayers,nPuVtx,INPATHPU,opt.etamean,opt.deta,addNoise,outlog))
+            scriptFile.write('%s/bin/digitizer %d %s/HGcal_%s.root $localdir/ %s %s %s %d %d %d %s %3.2f %3.2f | tee %s\n'%(os.getcwd(),opt.nevts,eosDirIn,outTag,granularity,noise,threshold,interCalib,nSiLayers,nPuVtx,INPATHPU,opt.etamean,opt.deta,outlog))
         else:
-            scriptFile.write('%s/bin/digitizer -c %s/DigiConfig.cfg -n %d -i %s/HGcal_%s.root -o $localdir/ --granulStr=%s --noiseStr=%s --threshStr=%s --interCalib=%d --nSiLayers=%d --nPU=%d --puPath=%s -a %s| tee %s\n'%(os.getcwd(),os.getcwd(),opt.nevts,eosDirIn,outTag,granularity,noise,threshold,interCalib,nSiLayers,nPuVtx,INPATHPU,addNoise,outlog))
-
+            scriptFile.write('%s/bin/digitizer %d %s/HGcal_%s.root $localdir/ %s %s %s %d %d %d %s | tee %s\n'%(os.getcwd(),opt.nevts,eosDirIn,outTag,granularity,noise,threshold,interCalib,nSiLayers,nPuVtx,INPATHPU,outlog))
         scriptFile.write('echo "--Local directory is " $localdir >> %s\n'%(g4log))
-        scriptFile.write('echo home=$HOME >> %s\n'%(g4log))
-        scriptFile.write('echo path=$PATH >> %s\n'%(g4log))
-        scriptFile.write('echo ldlibpath=$LD_LIBRARY_PATH >> %s\n'%(g4log))
         scriptFile.write('ls * >> %s\n'%(g4log))
         if len(opt.eos)>0:
+            #scriptFile.write('grep "alias eos=" /afs/cern.ch/project/eos/installation/cms/etc/setup.sh | sed "s/alias /export my/" > eosenv.sh\n')
+            #scriptFile.write('source eosenv.sh\n')
             scriptFile.write('mkdir -p %s\n'%eosDir)
             scriptFile.write('cp $localdir/DigiPFcal.root %s/Digi%s_%s%s.root\n'%(eosDir,suffix,label,outTag))
             scriptFile.write('if (( "$?" != "0" )); then\n')
             scriptFile.write('echo " --- Problem with copy of file DigiPFcal.root to EOS. Keeping locally." >> %s\n'%(g4log))
             scriptFile.write('else\n')
-            scriptFile.write('eossize=`eos ls -l %s/Digi%s_%s%s.root | awk \'{print $5}\'`\n'%(eosDir,suffix,label,outTag))
+            scriptFile.write('eossize=`ls -l %s/Digi%s_%s%s.root | awk \'{print $5}\'`\n'%(eosDir,suffix,label,outTag))
             scriptFile.write('localsize=`ls -l DigiPFcal.root | awk \'{print $5}\'`\n')
             scriptFile.write('if [ $eossize != $localsize ]; then\n')
             scriptFile.write('echo " --- Copy of digi file to eos failed. Localsize = $localsize, eossize = $eossize. Keeping locally..." >> %s\n'%(g4log))
@@ -263,19 +251,18 @@ for nPuVtx in nPuVtxlist:
         scriptFile.write('cp * %s/\n'%(outDir))
         scriptFile.write('echo "All done"\n')
         scriptFile.close()
+           
+	condorFile = open('%s/condorSubmitDigi%s.sub'%(outDir,suffix),'w')
+	condorFile.write('universe = vanilla\n')
+	condorFile.write('+JobFlavour = "nextweek"\n')
+	condorFile.write('Executable = %s/runDigiJob%s.sh\n'%(outDir,suffix))
+	condorFile.write('Output = %s/condorDigi%s.out\n'%(outDir,suffix))
+	condorFile.write('Error = %s/condorDigi%s.err\n'%(outDir,suffix))
+	condorFile.write('Log = %s/condorDigi%s.log\n'%(outDir,suffix))
+	condorFile.write('Queue 1\n')
+	condorFile.close()
 
         #submit
-        condorFile = open('%s/condorSubmitDigi%s.sub'%(outDir,suffix), 'w')
-        condorFile.write('universe = vanilla\n')
-        condorFile.write('+JobFlavour = "nextweek"\n')
-        condorFile.write('Executable = %s/runDigiJob%s.sh\n'%(outDir,suffix))
-        condorFile.write('Output = %s/condorDigi%s.out\n'%(outDir,suffix))
-        condorFile.write('Error = %s/condorDigi%s.err\n'%(outDir,suffix))
-        condorFile.write('Log = %s/condorDigi%s.log\n'%(outDir,suffix))
-        condorFile.write('Queue 1\n')
-        condorFile.close()
-
         os.system('chmod u+rwx %s/runDigiJob%s.sh'%(outDir,suffix))
-
-        if opt.nosubmit : os.system('echo condor_submit %s/condorSubmitDigi%s.sub'%(outDir,suffix))
+        if opt.nosubmit : os.system('echo condor_submit %s/condorSubmitDigi%s.sub'%(outDir,suffix)) 
         else: os.system('condor_submit %s/condorSubmitDigi%s.sub'%(outDir,suffix))

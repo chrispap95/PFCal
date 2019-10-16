@@ -43,7 +43,7 @@ make -j 5
 The samples are made in two steps:
 -Sim files use this command in PFCalEE:
 ```bash
-for run in `seq 0 09`; do ./submitProdCondor.py -s 2nd -q 1nw -g -t V08-00-00 -r $run -v 63 -m 2 -a 1.7 -b 3.8 -d gamma -f "" -F "" -n 250 -o /eos/home-c/chpapage/gamma -e /eos/home-c/chpapage/gamma; done
+for run in `seq 0 09`; do ./submitProdNoenergy.py -s 2nd -q 1nw -g -t V08-00-00 -r $run -v 63 -m 2 -a 1.7 -b 3.8 -d gamma -n 250 -o /eos/home-c/chpapage/gamma -e /eos/home-c/chpapage/gamma; done
 ```
 
 -Digi files use this command in PFCalEE/userlib:

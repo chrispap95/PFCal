@@ -65,8 +65,7 @@ public:
 private:
   int model_;
   double eta_;
-  G4ParticleGun
-  * particleGun;
+  G4ParticleGun* particleGun;
   HepMCG4AsciiReader* hepmcAscii;
   HepMCG4PythiaInterface* pythiaGen;
 
